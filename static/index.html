@@ -1,21 +1,379 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Team Maple Fleet Ops</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>
-:root{--bg:#0b1220;--panel:#111b2e;--line:#22314a;--text:#e8eef8;--muted:#93a4bd;--accent:#65d6b5;--warn:#f6c453;--bad:#ff6b6b}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,Segoe UI,Arial}header{height:64px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:#0d1728;position:sticky;top:0;z-index:5}.brand{font-weight:800;font-size:19px}.brand span{color:var(--accent)}nav button{background:none;border:0;color:var(--muted);padding:10px 12px;cursor:pointer;border-radius:8px}nav button.active,nav button:hover{background:#17243a;color:var(--text)}main{padding:22px;max-width:1400px;margin:auto}.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}.kpi .n{font-size:27px;font-weight:800;margin-top:7px}.muted{color:var(--muted)}.layout{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px}.map{height:470px;border-radius:10px;overflow:hidden}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.btn{border:0;background:var(--accent);color:#07130f;padding:9px 13px;border-radius:8px;font-weight:700;cursor:pointer}.btn.secondary{background:#20304a;color:var(--text)}.btn.warn{background:var(--warn)}input,select{background:#0d1728;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--muted);font-size:12px}.badge{padding:4px 8px;border-radius:20px;background:#1e3440;color:#9fe6d2;font-size:12px}.badge.warn{background:#493d1d;color:#ffd96d}.badge.bad{background:#4a2528;color:#ff9b9b}.section{margin-top:18px}.hidden{display:none}.routebox{background:#0d1728;border:1px solid var(--line);padding:12px;border-radius:10px}.tabs{display:flex;gap:8px;margin-bottom:12px}.small{font-size:12px}.event{padding:8px 0;border-bottom:1px solid var(--line)}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.map{height:400px}}@media(max-width:560px){.grid{grid-template-columns:1fr}main{padding:12px}}
-</style></head><body><header><div class="brand">🍁 Team Maple <span>Fleet Ops</span></div><nav><button class="active" data-page="dashboard">Dashboard</button><button data-page="fleet">Fleet</button><button data-page="shipments">Shipments</button><button data-page="optimizer">Optimize</button></nav></header><main>
-<section id="dashboard"><h2>Operations Dashboard</h2><div class="grid" id="kpis"></div><div class="layout"><div class="panel"><div class="row" style="justify-content:space-between"><h3>Live Fleet Map</h3><span class="muted small" id="updated"></span></div><div id="map1" class="map"></div></div><div class="panel"><h3>Recent Activity</h3><div id="events"></div><div class="section"><h3>PS2 Coverage</h3><div class="muted">Fleet monitoring ✓ &nbsp; Route optimization ✓ &nbsp; Load allocation ✓ &nbsp; Shipment tracking ✓</div></div></div></div></section>
-<section id="fleet" class="hidden"><h2>Fleet</h2><div class="panel"><table><thead><tr><th>Vehicle</th><th>Type</th><th>Driver</th><th>Status</th><th>Capacity</th><th>Load</th><th>Location</th></tr></thead><tbody id="fleetRows"></tbody></table></div></section>
-<section id="shipments" class="hidden"><div class="row" style="justify-content:space-between"><h2>Shipments</h2><button class="btn" onclick="newShipment()">+ New Shipment</button></div><div class="panel"><table><thead><tr><th>ID</th><th>Route</th><th>Load</th><th>Status</th><th>Vehicle</th><th>Actions</th></tr></thead><tbody id="shipRows"></tbody></table></div></section>
-<section id="optimizer" class="hidden"><h2>Route Optimization & Delay Risk</h2><div class="layout"><div class="panel"><div class="row"><label>Origin <select id="origin"></select></label><label>Destination <select id="destination"></select></label><label>Weather <select id="weather"><option>Clear</option><option>Light Rain</option><option>Heavy Rain</option><option>Storm</option></select></label><label>Traffic <select id="traffic"><option>Low</option><option selected>Normal</option><option>Heavy</option></select></label></div><div class="row section"><label>Driver exp <input id="exp" type="number" value="5" min="0"></label><label><input id="ref" type="checkbox"> Refrigerated</label><label><input id="peak" type="checkbox"> Peak hours</label><button class="btn" onclick="runOpt()">Run Optimization</button></div><div id="result" class="section"></div></div><div class="panel"><div id="map2" class="map"></div></div></div></section>
-</main><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>
-const cities=['Mumbai','Delhi','Bengaluru','Chennai','Hyderabad','Pune','Kolkata','Ahmedabad'];let map1,map2,markers={},poly;const cityCoords={Mumbai:[19.076,72.8777],Delhi:[28.7041,77.1025],Bengaluru:[12.9716,77.5946],Chennai:[13.0827,80.2707],Hyderabad:[17.385,78.4867],Pune:[18.5204,73.8567],Kolkata:[22.5726,88.3639],Ahmedabad:[23.0225,72.5714]};
-function initMaps(){map1=L.map('map1').setView([20.59,78.96],5);map2=L.map('map2').setView([20.59,78.96],5);const tile='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';L.tileLayer(tile,{attribution:'© OpenStreetMap contributors'}).addTo(map1);L.tileLayer(tile,{attribution:'© OpenStreetMap contributors'}).addTo(map2)}
-async function get(u,o){let r=await fetch(u,o);let j=await r.json();if(!r.ok)throw Error(j.error||'Request failed');return j}
-async function refresh(){let [d,v,s,e]=await Promise.all([get('/api/dashboard'),get('/api/vehicles'),get('/api/shipments'),get('/api/events')]);document.getElementById('kpis').innerHTML=[['Vehicles',d.total_vehicles],['Active',d.active_vehicles],['Idle',d.idle_vehicles],['Shipments',d.active_shipments],['Delayed',d.delayed_shipments]].map(x=>`<div class="card kpi"><div class="muted">${x[0]}</div><div class="n">${x[1]}</div></div>`).join('');document.getElementById('fleetRows').innerHTML=v.map(x=>`<tr><td>${x.vehicle_no}</td><td>${x.type}</td><td>${x.driver}</td><td><span class="badge ${x.status==='Maintenance'?'bad':''}">${x.status}</span></td><td>${x.capacity_kg} kg</td><td>${x.current_load_kg} kg</td><td>${(+x.lat).toFixed(3)}, ${(+x.lon).toFixed(3)}</td></tr>`).join('');document.getElementById('shipRows').innerHTML=s.map(x=>`<tr><td>${x.shipment_no}</td><td>${x.origin} → ${x.destination}</td><td>${x.load_kg} kg</td><td><span class="badge ${x.status==='Delayed'?'warn':''}">${x.status}</span></td><td>${x.vehicle_no||'Unassigned'}</td><td>${x.status!=='Delivered'?`<button class="btn secondary" onclick="assign(${x.id})">Assign</button> <button class="btn" onclick="optShipment(${x.id},'${x.origin}','${x.destination}')">Optimize</button> <button class="btn warn" onclick="setStatus(${x.id},'Delivered')">Deliver</button>`:'—'}</td></tr>`).join('');document.getElementById('events').innerHTML=e.map(x=>`<div class="event">${x.message}<div class="muted small">${x.created_at}</div></div>`).join('');drawVehicles(v);document.getElementById('updated').textContent='Updated '+new Date().toLocaleTimeString()}
-function drawVehicles(v){Object.values(markers).forEach(m=>map1.removeLayer(m));markers={};v.forEach(x=>{let m=L.circleMarker([x.lat,x.lon],{radius:7}).addTo(map1).bindPopup(`<b>${x.vehicle_no}</b><br>${x.type}<br>${x.status}<br>Load: ${x.current_load_kg}/${x.capacity_kg} kg`);markers[x.id]=m})}
-async function assign(sid){let list=await get('/api/eligible/'+sid);if(!list.length)return alert('No capacity-eligible vehicle available.');let msg='Eligible vehicles:\n'+list.map(v=>`${v.id}: ${v.vehicle_no} (${v.capacity_kg-v.current_load_kg} kg free)`).join('\n')+'\n\nEnter vehicle ID:';let id=prompt(msg);if(!id)return;try{await get('/api/shipments/'+sid+'/assign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vehicle_id:+id})});await refresh();alert('Vehicle assigned successfully.')}catch(e){alert(e.message)}}
-async function setStatus(id,status){try{await get('/api/shipments/'+id+'/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});await refresh()}catch(e){alert(e.message)}}
-function optShipment(id,o,d){document.querySelector('[data-page="optimizer"]').click();origin.value=o;destination.value=d;runOpt()}
-async function runOpt(){try{let r=await get('/api/optimize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({origin:origin.value,destination:destination.value,weather:weather.value,traffic:traffic.value,driver_exp:+exp.value,refrigerated:ref.checked,peak:peak.checked})});document.getElementById('result').innerHTML=`<div class="routebox"><b>Recommended route:</b> ${r.route.join(' → ')}<br><b>Distance:</b> ${r.distance_km} km &nbsp; <b>Base ETA:</b> ${Math.floor(r.base_eta_min/60)}h ${r.base_eta_min%60}m<br><b>Delay risk:</b> <span class="badge ${r.risk==='High'?'bad':r.risk==='Moderate'?'warn':''}">${r.risk}</span> &nbsp; <b>Predicted delay:</b> +${r.delay_min} min<br><b>Final ETA:</b> ${Math.floor(r.final_eta_min/60)}h ${r.final_eta_min%60}m</div>`;if(poly)map2.removeLayer(poly);poly=L.polyline(r.coordinates,{weight:5}).addTo(map2);map2.fitBounds(poly.getBounds(),{padding:[30,30]});r.coordinates.forEach((p,i)=>L.marker(p).addTo(map2).bindPopup(i===0?'Origin':i===r.coordinates.length-1?'Destination':'Stop #'+i));}catch(e){alert(e.message)}}
-function newShipment(){let o=prompt('Origin city:','Hyderabad'),d=prompt('Destination city:','Bengaluru'),kg=prompt('Load kg:','1000');if(!o||!d||!kg)return;get('/api/shipments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({origin:o,destination:d,load_kg:+kg,priority:'Normal'})}).then(refresh).catch(e=>alert(e.message))}
-function tabs(){document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));document.getElementById(b.dataset.page).classList.remove('hidden');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(b.dataset.page==='optimizer')setTimeout(()=>map2.invalidateSize(),100)})}
-for(const id of ['origin','destination']){let s=document.getElementById(id);s.innerHTML=cities.map(c=>`<option>${c}</option>`).join('')}origin.value='Hyderabad';destination.value='Bengaluru';initMaps();tabs();refresh();setInterval(async()=>{try{await get('/api/simulate',{method:'POST'});await refresh()}catch(e){}},5000);
-</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet_IQ AI - Multi-Fleet Autonomous Logistics Controller</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.18/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.18/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/space-grotesk@5.0.18/700.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/600.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5.0.18/700.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: {
+    fontFamily: { head: ['"Space Grotesk"','sans-serif'], body: ['Inter','sans-serif'] },
+    colors: { brand: { DEFAULT:'#f59e0b', soft:'#fbbf24', deep:'#b45309' }, night:'#060a14', panel:'#0c1322', edge:'#1e293b' }
+  } }
+};
+</script>
+<style>
+  html{scroll-behavior:smooth}
+  ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#334155;border-radius:8px}
+  .leaflet-container{background:#0b1220;font-family:Inter}
+  .glowline{background:linear-gradient(90deg,#f59e0b,#22d3ee,#f59e0b);background-size:200% 100%;animation:flow 4s linear infinite}
+  @keyframes flow{to{background-position:200% 0}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .fadeup{animation:fadeUp .5s ease both}
+  @keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,.5)}50%{box-shadow:0 0 0 8px rgba(34,211,238,0)}}
+  .livedot{animation:pulseDot 1.6s infinite}
+  .truckicon{font-size:26px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));transform:translate(-4px,-14px)}
+  .citydot{width:12px;height:12px;border-radius:9999px;border:2px solid #0b1220}
+  input,select{color-scheme:dark}
+</style>
+</head>
+<body class="bg-night text-slate-200 font-body">
+
+<!-- ══════════ NAV ══════════ -->
+<header class="fixed top-0 inset-x-0 z-50 bg-night/85 backdrop-blur border-b border-edge">
+  <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">🚚</span>
+      <div>
+        <h1 class="font-head font-bold text-lg leading-none text-white">Fleet_IQ <span class="text-brand">AI</span></h1>
+        <p class="text-[11px] text-slate-400">Multi-Vehicle Route Engine</p>
+      </div>
+    </div>
+    <nav class="hidden md:flex items-center gap-1 text-sm">
+      <a href="#ai-center" class="px-3 py-2 rounded-lg hover:bg-slate-800/70">🧠 AI Control Center</a>
+      <a href="#telematics" class="px-3 py-2 rounded-lg hover:bg-slate-800/70">📑 Manager Telematics Log</a>
+      <a href="#pool" class="px-3 py-2 rounded-lg hover:bg-slate-800/70">🚚 Active Fleet Vehicles Pool</a>
+    </nav>
+    <button id="simToggle" class="flex items-center gap-2 text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 rounded-full px-4 py-2 hover:bg-emerald-500/25 transition">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 livedot"></span> LIVE SIM
+    </button>
+  </div>
+  <div class="glowline h-[2px]"></div>
+</header>
+
+<!-- ══════════ HERO ══════════ -->
+<section class="relative pt-16">
+  <div class="absolute inset-0 bg-cover bg-center opacity-25" style="background-image:url('https://image.qwenlm.ai/public_source/ac8cb808-296d-40b0-a565-aa559d20f996/19ca67aa3-e8d9-4b16-acd9-3a6c218ba9e9.png')"></div>
+  <div class="absolute inset-0 bg-gradient-to-b from-night/60 via-night/80 to-night"></div>
+  <div class="relative max-w-7xl mx-auto px-4 py-14">
+    <p class="text-xs tracking-[.3em] text-cyan-300 font-semibold mb-3">AUTONOMOUS LOGISTICS CONTROLLER</p>
+    <h2 class="font-head font-bold text-3xl md:text-5xl text-white max-w-3xl leading-tight">Multi-Fleet Autonomous <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand to-cyan-400">Logistics Controller</span></h2>
+    <p class="text-slate-400 mt-4 max-w-2xl text-sm md:text-base">Register fleet inventory, let the AI matcher pair cargo to the right vehicle, customize every route independently, swipe through live vehicle cards and track each one on its own focused map.</p>
+    <div class="flex flex-wrap gap-3 mt-6 text-xs font-semibold">
+      <span class="bg-panel/80 border border-edge rounded-full px-4 py-2">🧠 AI Vehicle Matcher</span>
+      <span class="bg-panel/80 border border-edge rounded-full px-4 py-2">🗺️ Focused Live Route Maps</span>
+      <span class="bg-panel/80 border border-edge rounded-full px-4 py-2">📑 Hourly Telematics Intimation</span>
+      <span class="bg-panel/80 border border-edge rounded-full px-4 py-2">⛽ Fuel & Capacity Aware</span>
+    </div>
+  </div>
+</section>
+
+<main class="max-w-7xl mx-auto px-4 pb-20 space-y-14">
+
+<!-- ══════════ AI CONTROL CENTER ══════════ -->
+<section id="ai-center" class="scroll-mt-24">
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+    <div>
+      <h3 class="font-head font-bold text-2xl text-white">⚡ Vehicle Availability & Smart AI Matcher Engine</h3>
+      <p class="text-sm text-slate-400 mt-1 max-w-2xl">Input shipment cargo weight to evaluate available fleet inventory based on capacity, fuel consumption rate, weather conditions, and traffic density.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="openQuickAdd" class="text-sm font-semibold bg-brand text-night rounded-lg px-4 py-2 hover:bg-brand-soft transition">+ Add Vehicle</button>
+      <span class="text-xs font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/40 rounded-full px-3 py-2 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-400 livedot"></span>AI Optimizer Active</span>
+    </div>
+  </div>
+
+  <div id="quickAddPanel" class="hidden mb-6 bg-panel border border-edge rounded-2xl p-5 fadeup">
+    <h4 class="font-head font-semibold text-white mb-4">📋 Register Available Vehicle for AI Matching</h4>
+    <div class="grid md:grid-cols-4 gap-4">
+      <div><label class="text-xs text-slate-400">Vehicle Number (Plate)</label><input id="qPlate" placeholder="MH-12 AB 1234" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm focus:border-brand outline-none"></div>
+      <div><label class="text-xs text-slate-400">Capacity (KG)</label><input id="qCap" type="number" value="5000" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm focus:border-brand outline-none"></div>
+      <div><label class="text-xs text-slate-400">Vehicle Type</label><select id="qType" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm focus:border-brand outline-none"></select></div>
+      <div><label class="text-xs text-slate-400">Fuel Present (%)</label><input id="qFuel" type="number" value="80" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm focus:border-brand outline-none"></div>
+    </div>
+    <button id="saveQuick" class="mt-4 bg-brand text-night text-sm font-bold rounded-lg px-5 py-2.5 hover:bg-brand-soft transition">Save Available Vehicle To AI Matching Pool</button>
+  </div>
+
+  <div class="grid lg:grid-cols-5 gap-6">
+    <div class="lg:col-span-2 bg-panel border border-edge rounded-2xl p-5">
+      <h4 class="font-head font-semibold text-white mb-4">🤖 Shipment Parameters</h4>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="text-xs text-slate-400">Cargo Shipment Weight (KG)</label><input id="aWeight" type="number" value="1500" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm focus:border-cyan-400 outline-none"></div>
+        <div><label class="text-xs text-slate-400">Route Distance (KM Approx.)</label><input id="aDist" type="number" value="420" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm focus:border-cyan-400 outline-none"></div>
+        <div><label class="text-xs text-slate-400">Weather</label><select id="aWeather" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"><option>Clear</option><option>Light Rain</option><option>Heavy Rain</option><option>Storm</option></select></div>
+        <div><label class="text-xs text-slate-400">Traffic Density</label><select id="aTraffic" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"><option>Low</option><option selected>Normal</option><option>Heavy</option></select></div>
+      </div>
+      <button id="runMatch" class="mt-5 w-full bg-gradient-to-r from-brand to-orange-500 text-night text-sm font-bold rounded-lg px-5 py-3 hover:brightness-110 transition">🤖 Run AI Vehicle Recommendation</button>
+      <div id="matchResult" class="mt-5 space-y-3"></div>
+    </div>
+    <div class="lg:col-span-3 bg-panel border border-edge rounded-2xl p-5">
+      <h4 class="font-head font-semibold text-white mb-4">🛰️ Matcher Reasoning Feed</h4>
+      <div id="matchFeed" class="text-xs leading-relaxed space-y-2 max-h-[380px] overflow-y-auto pr-2">
+        <p class="text-slate-500">Awaiting recommendation run… the engine scores capacity headroom, fuel sufficiency for the distance, cruise speed, weather resilience and traffic behaviour per vehicle type.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ ROUTE CUSTOMIZER ══════════ -->
+<section id="customizer" class="scroll-mt-24">
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+    <div>
+      <h3 class="font-head font-bold text-2xl text-white">📦 Bulk Cargo & Route Customizer</h3>
+      <p class="text-sm text-slate-400 mt-1 max-w-3xl">Swipe through vehicles below to customize individual starting points, intermediate stops, destinations, and cargo parameters completely independently.</p>
+    </div>
+    <button id="openCustomAdd" class="text-sm font-semibold bg-cyan-500 text-night rounded-lg px-4 py-2 hover:bg-cyan-400 transition">+ Add Vehicle</button>
+  </div>
+
+  <div id="customAddPanel" class="hidden mb-6 bg-panel border border-edge rounded-2xl p-5 fadeup">
+    <h4 class="font-head font-semibold text-white mb-4">➕ Add New Vehicle with Customized Route</h4>
+    <div class="grid md:grid-cols-4 gap-4">
+      <div><label class="text-xs text-slate-400">Plate Number</label><input id="cPlate" placeholder="KA-01 XY 9999" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm focus:border-cyan-400 outline-none"></div>
+      <div><label class="text-xs text-slate-400">Vehicle Type</label><select id="cType" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"></select></div>
+      <div><label class="text-xs text-slate-400">Max Weight Cap (KG)</label><input id="cCap" type="number" value="6000" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"></div>
+      <div><label class="text-xs text-slate-400">Current Fuel Level (%)</label><input id="cFuel" type="number" value="90" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"></div>
+      <div class="md:col-span-2"><label class="text-xs text-slate-400">Cargo Goods Description</label><input id="cDesc" placeholder="FMCG cartons" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"></div>
+      <div><label class="text-xs text-slate-400">Cargo Weight (KG)</label><input id="cCargo" type="number" value="1200" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"></div>
+      <div><label class="text-xs text-slate-400">Delivery Priority</label><select id="cPriority" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"><option>Standard Dispatch</option><option>⚡ High Priority / Express</option></select></div>
+      <div><label class="text-xs text-slate-400">Starting Point (Origin Hub)</label><select id="cOrigin" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"></select></div>
+      <div class="md:col-span-2"><label class="text-xs text-slate-400">Intermediate Stops (Comma Separated)</label><input id="cStops" placeholder="Pune, Hyderabad" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"></div>
+      <div><label class="text-xs text-slate-400">End Destination</label><select id="cDest" class="mt-1 w-full bg-slate-900 border border-edge rounded-lg px-3 py-2 text-sm outline-none"></select></div>
+    </div>
+    <button id="saveCustom" class="mt-4 bg-cyan-500 text-night text-sm font-bold rounded-lg px-5 py-2.5 hover:bg-cyan-400 transition">Save & Add Dedicated Vehicle To Pool</button>
+  </div>
+
+  <!-- ══════════ SWIPE INSPECTOR + FOCUSED MAP ══════════ -->
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div class="bg-panel border border-edge rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="font-head font-semibold text-white">📸 Vehicle Route & Cargo Inspector (Swipe Posts)</h4>
+        <div class="flex items-center gap-2">
+          <button id="prevV" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold transition">◀</button>
+          <span id="swipeCounter" class="text-xs font-semibold text-slate-300 bg-slate-800/80 rounded-full px-3 py-2">Vehicle 0 of 0</span>
+          <button id="nextV" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold transition">▶</button>
+        </div>
+      </div>
+      <div id="swipeCard" class="min-h-[330px]"></div>
+    </div>
+    <div class="bg-panel border border-edge rounded-2xl p-5 flex flex-col">
+      <h4 class="font-head font-semibold text-white mb-2">🗺️ Vehicle Specific Live Route Map</h4>
+      <p id="mapVehicleName" class="text-xs text-cyan-300 font-semibold mb-3">Selecting Vehicle...</p>
+      <div id="map" class="flex-1 min-h-[330px] rounded-xl overflow-hidden border border-edge"></div>
+      <p class="text-[11px] text-slate-500 mt-3">🎯 <span class="text-slate-300 font-semibold">Focused Mode:</span> Map dynamically plots and tracks ONLY the currently viewed swipeable vehicle card.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ TELEMATICS ══════════ -->
+<section id="telematics" class="scroll-mt-24">
+  <div class="mb-6">
+    <h3 class="font-head font-bold text-2xl text-white">📑 Autonomous Manager Telematics & Hourly Intimation Log</h3>
+    <p class="text-sm text-slate-400 mt-1 max-w-3xl">Hourly progress breakdown intimating current vehicle locations and exact remaining time until reaching final destinations.</p>
+  </div>
+  <div id="teleFeed" class="grid md:grid-cols-2 gap-3"></div>
+</section>
+
+<!-- ══════════ POOL ══════════ -->
+<section id="pool" class="scroll-mt-24">
+  <div class="mb-6">
+    <h3 class="font-head font-bold text-2xl text-white">🚚 Active Fleet Vehicles Pool</h3>
+    <p class="text-sm text-slate-400 mt-1 max-w-3xl">Master overview of all available vehicles in pool with individual specs, weight capacity, fuel efficiency, and assigned routes.</p>
+  </div>
+  <div class="bg-panel border border-edge rounded-2xl overflow-x-auto">
+    <table class="w-full text-sm min-w-[860px]">
+      <thead><tr class="text-left text-xs text-slate-400 border-b border-edge">
+        <th class="px-4 py-3">Plate</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Capacity</th><th class="px-4 py-3">Fuel</th><th class="px-4 py-3">Cargo</th><th class="px-4 py-3">Priority</th><th class="px-4 py-3">Route</th><th class="px-4 py-3">Progress</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th>
+      </tr></thead>
+      <tbody id="poolBody"></tbody>
+    </table>
+  </div>
+</section>
+</main>
+
+<footer class="border-t border-edge py-6 text-center text-xs text-slate-500">Fleet_IQ AI · Team Maple 🍁 · Simulated GPS + heuristic optimizer demo</footer>
+<div id="toast" class="fixed bottom-5 right-5 z-[999] hidden bg-slate-800 border border-edge text-sm text-white rounded-xl px-5 py-3 shadow-2xl fadeup"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+let pool = [], cities = [], tIdx = 0, map, focusLayer, liveTimer = null;
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...opts });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+  return j;
+}
+function toast(msg, ok = true) {
+  const t = $('#toast'); t.textContent = msg;
+  t.className = `fixed bottom-5 right-5 z-[999] text-sm text-white rounded-xl px-5 py-3 shadow-2xl fadeup border ${ok ? 'bg-emerald-600/90 border-emerald-400' : 'bg-rose-600/90 border-rose-400'}`;
+  t.classList.remove('hidden'); setTimeout(() => t.classList.add('hidden'), 2600);
+}
+const statusChip = s => ({
+  'In Transit': 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40',
+  'Delivered': 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+  'Available': 'bg-slate-500/15 text-slate-300 border-slate-500/40'
+}[s] || 'bg-amber-500/15 text-amber-300 border-amber-500/40');
+
+/* ── MAP ── */
+map = L.map('map', { zoomControl: true }).setView([20.5, 78.9], 5);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© OpenStreetMap © CARTO', maxZoom: 19 }).addTo(map);
+focusLayer = L.layerGroup().addTo(map);
+
+function drawVehicle(v) {
+  focusLayer.clearLayers();
+  if (!v) return;
+  $('#mapVehicleName').textContent = v.origin ? `Tracking ${v.plate} · ${v.origin} → ${v.destination}` : `${v.plate} · parked (no route assigned)`;
+  if (!v.coords || v.coords.length < 2) { map.setView([20.5, 78.9], 5); return; }
+  const color = v.priority && v.priority.includes('Express') ? '#f59e0b' : '#22d3ee';
+  const line = L.polyline(v.coords, { color, weight: 4, dashArray: '8 6', opacity: .9 }).addTo(focusLayer);
+  v.coords.forEach((c, i) => {
+    const isO = i === 0, isD = i === v.coords.length - 1;
+    L.circleMarker(c, { radius: 7, color: '#0b1220', weight: 2, fillColor: isO ? '#34d399' : isD ? '#f43f5e' : '#fbbf24', fillOpacity: 1 })
+      .bindTooltip(v.route[i], { permanent: false }).addTo(focusLayer);
+  });
+  L.marker([v.lat, v.lon], { icon: L.divIcon({ className: 'truckicon', html: '🚚', iconSize: [30, 30] }) }).addTo(focusLayer);
+  map.fitBounds(line.getBounds(), { padding: [36, 36] });
+}
+
+/* ── SWIPE CARD ── */
+function renderCard() {
+  const box = $('#swipeCard');
+  if (!pool.length) { box.innerHTML = '<div class="h-full flex items-center justify-center text-slate-500 text-sm">No vehicles in pool yet — add one above.</div>'; $('#swipeCounter').textContent = 'Vehicle 0 of 0'; drawVehicle(null); return; }
+  tIdx = (tIdx + pool.length) % pool.length;
+  const v = pool[tIdx];
+  $('#swipeCounter').textContent = `Vehicle ${tIdx + 1} of ${pool.length}`;
+  const pct = v.progress_pct || 0;
+  const express = v.priority && v.priority.includes('Express');
+  box.innerHTML = `
+  <div class="fadeup rounded-xl border ${express ? 'border-amber-500/50' : 'border-edge'} bg-slate-900/60 p-5">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <p class="font-head font-bold text-xl text-white">${v.plate}</p>
+        <p class="text-xs text-slate-400 mt-1">${v.vtype} · ${v.speed_kph} km/h cruise · ${v.kmpl} km/L economy</p>
+      </div>
+      <div class="flex flex-col items-end gap-2">
+        <span class="text-[11px] font-bold rounded-full px-3 py-1 border ${statusChip(v.status)}">${v.status}</span>
+        ${express ? '<span class="text-[11px] font-bold rounded-full px-3 py-1 bg-amber-500/15 text-amber-300 border border-amber-500/40">⚡ Express</span>' : ''}
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mt-4 text-xs">
+      <div class="bg-slate-800/60 rounded-lg p-3"><p class="text-slate-400">Cargo</p><p class="text-slate-100 font-semibold mt-1">${v.cargo_desc || '—'}</p><p class="text-slate-400 mt-1">${v.cargo_kg} KG / ${v.capacity_kg} KG cap</p></div>
+      <div class="bg-slate-800/60 rounded-lg p-3"><p class="text-slate-400">Fuel Present</p><p class="text-slate-100 font-semibold mt-1">${v.fuel_pct.toFixed(0)}%</p><div class="h-1.5 bg-slate-700 rounded-full mt-2"><div class="h-1.5 rounded-full ${v.fuel_pct < 25 ? 'bg-rose-400' : 'bg-emerald-400'}" style="width:${v.fuel_pct}%"></div></div></div>
+    </div>
+    <div class="mt-4 text-xs">
+      <p class="text-slate-400 mb-1">Custom Route</p>
+      <p class="text-slate-100 font-semibold">${v.route && v.route.length ? v.route.join(' → ') : 'No route assigned (available for AI matching)'}</p>
+    </div>
+    <div class="mt-4">
+      <div class="flex justify-between text-[11px] text-slate-400 mb-1"><span>Trip progress</span><span>${pct.toFixed(0)}%</span></div>
+      <div class="h-2 bg-slate-700 rounded-full"><div class="h-2 rounded-full bg-gradient-to-r from-brand to-cyan-400" style="width:${pct}%"></div></div>
+      <div class="flex justify-between text-[11px] mt-2 text-slate-400">
+        <span>⏱ Hour ${v.hour}</span><span>${v.remaining_km != null ? v.remaining_km.toFixed(0) + ' km left' : '—'}</span>
+        <span class="text-cyan-300 font-semibold">${v.remaining_min != null ? '~' + v.remaining_min + ' min to destination' : ''}</span>
+      </div>
+    </div>
+  </div>`;
+  drawVehicle(v);
+}
+
+/* ── POOL TABLE ── */
+function renderPool() {
+  $('#poolBody').innerHTML = pool.map(v => `
+  <tr class="border-b border-edge/60 hover:bg-slate-800/40">
+    <td class="px-4 py-3 font-semibold text-white">${v.plate}</td>
+    <td class="px-4 py-3">${v.vtype}</td>
+    <td class="px-4 py-3">${v.capacity_kg} KG</td>
+    <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-14 h-1.5 bg-slate-700 rounded-full"><div class="h-1.5 rounded-full ${v.fuel_pct < 25 ? 'bg-rose-400' : 'bg-emerald-400'}" style="width:${v.fuel_pct}%"></div></div><span class="text-xs">${v.fuel_pct.toFixed(0)}%</span></div></td>
+    <td class="px-4 py-3">${v.cargo_kg} KG</td>
+    <td class="px-4 py-3">${v.priority && v.priority.includes('Express') ? '⚡ Express' : 'Standard'}</td>
+    <td class="px-4 py-3 text-xs">${v.route && v.route.length ? v.route.join(' → ') : '—'}</td>
+    <td class="px-4 py-3">${(v.progress_pct || 0).toFixed(0)}%</td>
+    <td class="px-4 py-3"><span class="text-[11px] font-bold rounded-full px-2.5 py-1 border ${statusChip(v.status)}">${v.status}</span></td>
+    <td class="px-4 py-3"><button data-del="${v.id}" class="text-xs text-rose-400 hover:text-rose-300">✕</button></td>
+  </tr>`).join('');
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = async () => {
+    try { await api('/api/pool/' + b.dataset.del, { method: 'DELETE' }); toast('Vehicle removed from pool'); refresh(); } catch (e) { toast(e.message, false); }
+  });
+}
+
+/* ── TELEMATICS ── */
+async function renderTele() {
+  const rows = await api('/api/telematics');
+  $('#teleFeed').innerHTML = rows.length ? rows.map(t => `
+  <div class="bg-panel border border-edge rounded-xl p-4 flex gap-3 items-start">
+    <span class="shrink-0 w-10 h-10 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 flex items-center justify-center font-head font-bold text-xs">H${t.hour}</span>
+    <div class="flex-1 text-xs">
+      <div class="flex justify-between gap-2"><p class="font-semibold text-white">${t.plate}</p><span class="text-slate-500">${t.created_at}</span></div>
+      <p class="text-slate-300 mt-1">📍 ${t.location} · <span class="text-cyan-300">${t.progress_pct}% complete</span> · <span class="text-amber-300">${t.remaining_min} min remaining</span></p>
+      <p class="text-slate-400 mt-1">${t.note}</p>
+    </div>
+  </div>`).join('') : '<p class="text-slate-500 text-sm">No telematics yet — start the live simulation.</p>';
+}
+
+/* ── AI MATCH ── */
+$('#runMatch').onclick = async () => {
+  try {
+    const r = await api('/api/ai-match', { method: 'POST', body: JSON.stringify({
+      cargo_weight: +$('#aWeight').value, distance_km: +$('#aDist').value,
+      weather: $('#aWeather').value, traffic: $('#aTraffic').value }) });
+    const box = $('#matchResult');
+    if (!r.candidates.length) { box.innerHTML = '<p class="text-rose-300 text-xs">No available (unassigned) vehicles qualify. Register one with “+ Add Vehicle”.</p>'; return; }
+    const b = r.candidates[0];
+    box.innerHTML = `
+    <div class="rounded-xl border border-emerald-500/50 bg-emerald-500/10 p-4 fadeup">
+      <p class="text-[11px] font-bold text-emerald-300">🤖 BEST MATCH · SCORE ${b.score}/100</p>
+      <p class="font-head font-bold text-white text-lg mt-1">${b.plate}</p>
+      <p class="text-xs text-slate-300 mt-1">${b.vtype} · ETA ~${b.eta_min} min · fuel needed ${b.fuel_needed_pct}% (has ${b.fuel_pct}%)</p>
+      <ul class="text-[11px] text-slate-300 mt-2 space-y-1">${b.reasons.map(x => '<li>• ' + x + '</li>').join('')}</ul>
+    </div>` + r.candidates.slice(1, 4).map(c => `
+    <div class="rounded-lg border border-edge bg-slate-900/60 px-3 py-2 flex justify-between text-xs"><span class="text-slate-200 font-semibold">${c.plate} <span class="text-slate-500">(${c.vtype})</span></span><span class="text-cyan-300 font-bold">${c.score}/100</span></div>`).join('');
+    $('#matchFeed').innerHTML = r.candidates.map(c => `<p class="text-slate-300"><span class="text-brand font-bold">${c.plate}</span> — ${c.reasons.join(' · ')}</p>`).join('');
+    toast('AI recommendation ready');
+  } catch (e) { toast(e.message, false); }
+};
+
+/* ── FORMS ── */
+$('#openQuickAdd').onclick = () => $('#quickAddPanel').classList.toggle('hidden');
+$('#openCustomAdd').onclick = () => $('#customAddPanel').classList.toggle('hidden');
+$('#saveQuick').onclick = async () => {
+  try { await api('/api/pool', { method: 'POST', body: JSON.stringify({ plate: $('#qPlate').value, type: $('#qType').value, capacity_kg: +$('#qCap').value, fuel_pct: +$('#qFuel').value }) }); toast('Vehicle saved to AI matching pool'); $('#qPlate').value = ''; refresh(); } catch (e) { toast(e.message, false); }
+};
+$('#saveCustom').onclick = async () => {
+  try { await api('/api/pool/custom', { method: 'POST', body: JSON.stringify({ plate: $('#cPlate').value, type: $('#cType').value, capacity_kg: +$('#cCap').value, fuel_pct: +$('#cFuel').value, cargo_desc: $('#cDesc').value, cargo_kg: +$('#cCargo').value, priority: $('#cPriority').value, origin: $('#cOrigin').value, stops: $('#cStops').value, destination: $('#cDest').value }) }); toast('Dedicated vehicle dispatched to pool'); $('#cPlate').value = ''; $('#cStops').value = ''; refresh(); } catch (e) { toast(e.message, false); }
+};
+
+/* ── SWIPE / SIM ── */
+$('#prevV').onclick = () => { tIdx--; renderCard(); };
+$('#nextV').onclick = () => { tIdx++; renderCard(); };
+$('#simToggle').onclick = function () {
+  if (liveTimer) { clearInterval(liveTimer); liveTimer = null; this.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-400"></span> SIM PAUSED'; this.className = 'flex items-center gap-2 text-xs font-semibold bg-slate-700/40 text-slate-300 border border-slate-600 rounded-full px-4 py-2 hover:bg-slate-700 transition'; }
+  else { liveTimer = setInterval(tick, 5000); this.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 livedot"></span> LIVE SIM'; this.className = 'flex items-center gap-2 text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 rounded-full px-4 py-2 hover:bg-emerald-500/25 transition'; tick(); }
+};
+async function tick() { try { await api('/api/simulate', { method: 'POST' }); refresh(); } catch (e) {} }
+
+async function refresh() {
+  try { pool = await api('/api/pool'); renderCard(); renderPool(); renderTele(); } catch (e) { toast(e.message, false); }
+}
+(async function init() {
+  cities = await api('/api/cities');
+  const types = ['Motorbike', 'Van', 'Pickup', 'Truck', 'Heavy Truck'];
+  $('#qType').innerHTML = types.map(t => `<option>${t}</option>`).join('');
+  $('#cType').innerHTML = types.map(t => `<option>${t}</option>`).join('');
+  $('#cOrigin').innerHTML = cities.map(c => `<option>${c}</option>`).join('');
+  $('#cDest').innerHTML = cities.map(c => `<option ${c === 'Bengaluru' ? 'selected' : ''}>${c}</option>`).join('');
+  liveTimer = setInterval(tick, 5000);
+  refresh();
+})();
+</script>
+</body>
+</html>
