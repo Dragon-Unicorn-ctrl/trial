@@ -1,0 +1,4 @@
+1. Extract the ZIP.
+2. Open the Team_Maple_FleetIQ_v3 folder.
+3. Double-click run.bat (or open Terminal in this folder and run: python app.py).
+4. Open http://127.0.0.1:5000
