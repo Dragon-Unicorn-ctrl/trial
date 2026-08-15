@@ -1,4 +1,0 @@
-1. Install Python 3.10+.
-2. Double-click run.bat.
-3. Wait for Flask to start.
-4. Open http://127.0.0.1:5000 in Chrome/Edge.
