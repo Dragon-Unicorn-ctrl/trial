@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Fleet Coordination and Logistics Management Platform</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0d1830;
+      --card: #111e38;
+      --line: rgba(255, 255, 255, 0.09);
+      --text: #e8eefc;
+      --muted: #94a3c4;
+      --brand: #2f81f7;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+      --info: #38bdf8;
+      radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(47, 129, 247, 0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 25%),
+        var(--bg);
+      color: var(--text);
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+      color: inherit;
+    }
+
+    a { color: var(--info); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .hidden { display: none !important; }
+    .muted { color: var(--muted); }
+    .small { font-size: 13px; }
+
+    .login-wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)), var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.28);
+    }
+
+    .login-card {
+      width: min(430px, 94vw);
+      display: grid;
+      gap: 14px;
+    }
+
+    .login-card h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.15;
+    }
+
+    .login-card p { margin: 0; color: var(--muted); }
+
+    label {
+      display: grid;
+      gap: 7px;
+      margin: 12px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: #0a1426;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: rgba(47, 129, 247, 0.75);
+      box-shadow: 0 0 0 3px rgba(47,129,247,0.15);
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: #17294d;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: 180ms ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.2); }
+    .btn.primary { background: var(--brand); border-color: transparent; }
+    .btn.success { background: #14532d; border-color: rgba(34,197,94,0.3); }
+    .btn.danger { background: #7f1d1d; border-color: rgba(239,68,68,0.35); }
+    .btn.warn { background: #78350f; border-color: rgba(245,158,11,0.35); }
+    .btn.ghost { background: transparent; }
+    .btn.block { width: 100%; }
+    .btn.small { padding: 7px 10px; font-size: 13px; }
+
+    .demo-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .error-text { color: #fca5a5; }
+    .success-box {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.24);
+      color: #bbf7d0;
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      padding: 20px;
+      border-right: 1px solid var(--line);
+      background: rgba(6, 13, 27, 0.72);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .brand h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0.2px;
+    }
+
+    .brand span { color: var(--muted); font-size: 13px; }
+
+    .nav-menu { display: grid; gap: 8px; }
+
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      padding: 11px 12px;
+      border-radius: 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      background: rgba(47,129,247,0.12);
+      color: var(--text);
+      border-color: rgba(47,129,247,0.24);
+    }
+
+    .user-box {
+      margin-top: auto;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .main {
+      padding: 22px;
+      min-width: 0;
+    }
+
+    .page-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .page-head h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.15;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .kpi { padding: 16px; }
+    .kpi-value { font-size: 30px; font-weight: 700; }
+    .kpi-label { color: var(--muted); margin-top: 6px; font-size: 14px; }
+
+    .good { color: #86efac; }
+    .warn { color: #fcd34d; }
+    .bad { color: #fca5a5; }
+    .info { color: #7dd3fc; }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .card-head h3 { margin: 0; font-size: 18px; }
+
+    .map {
+      height: 460px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      z-index: 0;
+    }
+
+    .leaflet-container { z-index: 0; }
+
+    .table-wrap {
+      overflow: auto;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.45px;
+      background: rgba(255,255,255,0.02);
+      position: sticky;
+      top: 0;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr.delayed-row td { background: rgba(239,68,68,0.07); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      text-transform: capitalize;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .badge.good { border-color: rgba(34,197,94,0.35); color: #bbf7d0; }
+    .badge.warn { border-color: rgba(245,158,11,0.35); color: #fde68a; }
+    .badge.bad { border-color: rgba(239,68,68,0.35); color: #fecaca; }
+    .badge.info { border-color: rgba(56,189,248,0.35); color: #bae6fd; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .spread { justify-content: space-between; align-items: flex-start; }
+
+    .alert-card {
+      border: 1px solid rgba(239,68,68,0.28);
+      background: rgba(239,68,68,0.08);
+      border-radius: 14px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .shipment-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .shipment-card.delayed {
+      border-color: rgba(239,68,68,0.28);
+      background: rgba(239,68,68,0.07);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 16, 0.72);
+      backdrop-filter: blur(6px);
+      display: grid;
+      place-items: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .modal {
+      width: min(760px, 96vw);
+      max-height: 88vh;
+      overflow: auto;
+      background: #0d1830;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.45);
+    }
+
+    .modal-body { padding-top: 8px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 14px;
+    }
+
+    .toast-root {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      gap: 10px;
+      z-index: 3000;
+      max-width: min(380px, calc(100vw - 36px));
+    }
+
+    .toast {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #132341;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.3);
+    }
+
+    .toast.success { border-color: rgba(34,197,94,0.35); }
+    .toast.error { border-color: rgba(239,68,68,0.4); }
+    .toast.warn { border-color: rgba(245,158,11,0.4); }
+
+    .weather-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      margin: 10px 0;
+      font-weight: 600;
+    }
+
+    .weather-badge.good { border-color: rgba(34,197,94,0.35); color: #bbf7d0; }
+    .weather-badge.warn { border-color: rgba(245,158,11,0.35); color: #fde68a; }
+    .weather-badge.bad { border-color: rgba(239,68,68,0.35); color: #fecaca; }
+    .weather-badge.info { border-color: rgba(56,189,248,0.35); color: #bae6fd; }
+
+    .recommended-box {
+      border: 1px solid rgba(56,189,248,0.28);
+      background: rgba(56,189,248,0.08);
+      border-radius: 14px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+
+    .mini-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .mini-table th, .mini-table td { padding: 9px 8px; }
+    .selected-row td { background: rgba(56,189,248,0.08); }
+
+    .map-popup {
+      color: #08101f;
+      font-size: 13px;
+      line-height: 1.4;
+      min-width: 170px;
+    }
+
+    @media (max-width: 980px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: relative;
+        height: auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .nav-menu { display: flex; flex-wrap: wrap; }
+      .user-box { margin-top: 0; }
+      .split { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+      .map { height: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toastRoot" class="toast-root"></div>
+  <div id="modalRoot"></div>
+
+  <div id="loginView" class="login-wrap">
+    <div class="card login-card">
+      <h1>Smart Fleet Control</h1>
+      <p>Sign in to access fleet coordination, shipment tracking, and route intelligence.</p>
+
+      <form id="loginForm">
+        <label>
+          Username / Email
+          <input id="loginUsername" value="manager@fleet.com" required />
+        </label>
+
+        <label>
+          Password
+          <input id="loginPassword" type="password" value="Manager@123" required />
+        </label>
+
+        <div id="loginError" class="error-text hidden"></div>
+
+        <button class="btn primary block" type="submit">Sign in</button>
+      </form>
+
+      <div class="demo-row">
+        <button class="btn demo-fill" type="button" data-fill="manager">Manager demo</button>
+        <button class="btn demo-fill" type="button" data-fill="driver">Driver demo</button>
+      </div>
+
+      <p class="muted small">
+        Manager: manager@fleet.com / Manager@123<br />
+        Driver: driver1@fleet.com / Driver@123
+      </p>
+    </div>
+  </div>
+
+  <div id="appView" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>Smart Fleet</h2>
+        <span>Coordination &amp; Logistics</span>
+      </div>
+
+      <nav id="navMenu" class="nav-menu"></nav>
+
+      <div id="userBox" class="user-box"></div>
+
+      <button id="logoutBtn" class="btn ghost block" type="button">Logout</button>
+    </aside>
+
+    <main class="main">
+      <section id="managerSection" class="hidden">
+        <header class="page-head">
+          <h1>Manager Control Center</h1>
+          <button id="refreshManagerBtn" class="btn" type="button">Refresh</button>
+        </header>
+
+        <section id="tab-overview" class="tab">
+          <div id="kpiGrid" class="kpis"></div>
+
+          <div class="split">
+            <div class="card">
+              <div class="card-head">
+                <h3>Live fleet map</h3>
+                <span id="mapTimestamp" class="muted small"></span>
+              </div>
+              <div id="fleetMap" class="map"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h3>Delay resolution</h3>
+              </div>
+              <div id="delayPanel"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Shipments requiring attention</h3>
+              <button class="btn primary js-add-shipment" type="button">New shipment</button>
+            </div>
+            <div id="overviewShipments" class="table-wrap"></div>
+          </div>
+        </section>
+
+        <section id="tab-vehicles" class="tab hidden">
+          <div class="card">
+            <div class="card-head">
+              <h3>Fleet vehicles</h3>
+              <button class="btn primary js-add-vehicle" type="button">Add vehicle</button>
+            </div>
+            <div id="vehiclesTable" class="table-wrap"></div>
+          </div>
+        </section>
+
+        <section id="tab-shipments" class="tab hidden">
+          <div class="card">
+            <div class="card-head">
+              <h3>All shipments</h3>
+              <button class="btn primary js-add-shipment" type="button">New shipment</button>
+            </div>
+            <div id="shipmentsTable" class="table-wrap"></div>
+          </div>
+        </section>
+
+        <section id="tab-drivers" class="tab hidden">
+          <div class="card">
+            <div class="card-head">
+              <h3>Drivers</h3>
+              <button class="btn primary js-add-driver" type="button">Add driver</button>
+            </div>
+            <div id="driversTable" class="table-wrap"></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="driverSection" class="hidden">
+        <section id="tab-driver" class="tab">
+          <header class="page-head">
+            <h1>Driver Console</h1>
+            <button id="refreshDriverBtn" class="btn" type="button">Refresh</button>
+          </header>
+
+          <div class="split">
+            <div id="driverProfileCard" class="card"></div>
+            <div id="managerContactCard" class="card"></div>
+          </div>
+
+          <div class="card" style="margin-bottom: 18px;">
+            <div class="card-head">
+              <h3>Assigned shipments</h3>
+              <button id="updateGpsBtn" class="btn" type="button">Update my GPS</button>
+            </div>
+            <div id="driverShipments"></div>
+          </div>
+
+          <div class="split">
+            <div class="card">
+              <div class="card-head">
+                <h3>AI route and weather intelligence</h3>
+                <button id="analyzeRouteBtn" class="btn" type="button">Analyze</button>
+              </div>
+              <div id="routeIntel"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h3>Route map</h3>
+              </div>
+              <div id="driverMap" class="map"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const state = {
+      token: localStorage.getItem("fleet_token") || "",
+      user: null,
+      config: null,
+      manager: null,
+      driver: null,
+      fleetMap: null,
+      driverMap: null
+    };
+
+    const VEHICLE_STATUS_LIST = ["ready_to_load", "loaded", "empty", "delayed", "maintenance"];
+    const SHIPMENT_STATUS_LIST = ["pending", "assigned", "in_transit", "arrived", "delayed", "delivered", "cancelled"];
+
+    const $ = (selector, root = document) => root.querySelector(selector);
+    const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+    async function api(path, { method = "GET", body, auth = true } = {}) {
+      const headers = { "Content-Type": "application/json" };
+      if (auth && state.token) headers.Authorization = `Bearer ${state.token}`;
+
+      const response = await fetch(`/api${path}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      if (!response.ok) {
+        if (response.status === 401 && state.user) logout();
+        throw new Error(data.error || `Request failed with status ${response.status}`);
+      }
+
+      return data;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function telHref(phone) {
+      return `tel:${String(phone || "").replace(/[^+\d]/g, "")}`;
+    }
+
+    function fmtDateTime(iso) {
+      if (!iso) return "-";
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return "-";
+      return date.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function toast(message, type = "info") {
+      const el = document.createElement("div");
+      el.className = `toast ${type}`;
+      el.textContent = message;
+      $("#toastRoot").appendChild(el);
+      setTimeout(() => el.remove(), 4200);
+    }
+
+    function openModal(title, bodyHtml) {
+      const root = $("#modalRoot");
+      root.innerHTML = `
+        <div class="modal-backdrop">
+          <div class="modal">
+            <div class="card-head">
+              <h3>${escapeHtml(title)}</h3>
+              <button type="button" class="btn ghost" data-close-modal>Close</button>
+            </div>
+            <div class="modal-body">${bodyHtml}</div>
+          </div>
+        </div>
+      `;
+
+      const backdrop = $(".modal-backdrop", root);
+      backdrop.addEventListener("click", (event) => {
+        if (event.target === backdrop) closeModal();
+      });
+
+      $$("[data-close-modal]", root).forEach((btn) =>
+        btn.addEventListener("click", closeModal)
+      );
+    }
+
+    function closeModal() {
+      $("#modalRoot").innerHTML = "";
+    }
+
+    function statusColor(status) {
+      if (status === "ready_to_load") return "#22c55e";
+      if (status === "loaded") return "#38bdf8";
+      if (status === "empty") return "#f59e0b";
+      if (status === "delayed") return "#ef4444";
+      return "#94a3c4";
+    }
+
+    function badge(status) {
+      const tone =
+        status === "delayed" || status === "cancelled"
+          ? "bad"
+          : status === "delivered"
+            ? "good"
+            : status === "in_transit" || status === "arrived"
+              ? "info"
+              : "warn";
+
+      return `<span class="badge ${tone}">${escapeHtml(String(status || "").replaceAll("_", " "))}</span>`;
+    }
+
+    function isShipmentActiveStatus(status) {
+      return !["delivered", "cancelled"].includes(status);
+    }
+
+    async function getConfig() {
+      if (state.config) return state.config;
+      state.config = await api("/config", { auth: false });
+      return state.config;
+    }
+
+    let googleLoaderPromise = null;
+
+    function loadGoogleMaps(apiKey) {
+      if (window.google?.maps) return Promise.resolve();
+
+      if (!googleLoaderPromise) {
+        googleLoaderPromise = new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            googleLoaderPromise = null;
+            reject(new Error("Google Maps load timeout"));
+          }, 7000);
+
+          window.__fleetGoogleReady = () => {
+            clearTimeout(timeout);
+            resolve(true);
+          };
+
+          const script = document.createElement("script");
+          script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&callback=__fleetGoogleReady&v=weekly`;
+          script.async = true;
+          script.onerror = () => {
+            clearTimeout(timeout);
+            googleLoaderPromise = null;
+            reject(new Error("Google Maps script failed"));
+          };
+
+          document.head.appendChild(script);
+        });
+      }
+
+      return googleLoaderPromise;
+    }
+
+    class LeafletAdapter {
+      constructor(elementId, center, zoom = 6) {
+        this.map = L.map(elementId).setView([center.lat, center.lng], zoom);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors"
+        }).addTo(this.map);
+
+        this.markers = [];
+        this.lines = [];
+      }
+
+      invalidate() {
+        this.map.invalidateSize();
+      }
+
+      clear() {
+        this.markers.forEach((marker) => marker.remove());
+        this.lines.forEach((line) => line.remove());
+        this.markers = [];
+        this.lines = [];
+      }
+
+      addMarker({ lat, lng, color, title, popup }) {
+        const marker = L.circleMarker([lat, lng], {
+          radius: 8,
+          fillColor: color || "#94a3c4",
+          color: "#ffffff",
+          weight: 2,
+          fillOpacity: 0.95,
+          title
+        }).addTo(this.map);
+
+        if (popup) marker.bindPopup(popup);
+        this.markers.push(marker);
+        return marker;
+      }
+
+      drawPath(path, color = "#2f81f7", dashed = false) {
+        const pathPoints = (path || []).filter(Boolean).map((p) => [p.lat, p.lng]);
+        if (pathPoints.length < 2) return null;
+
+        const line = L.polyline(pathPoints, {
+          color,
+          weight: 4,
+          opacity: 0.9,
+          dashArray: dashed ? "6 8" : null
+        }).addTo(this.map);
+
+        this.lines.push(line);
+        this.map.fitBounds(line.getBounds(), { padding: [24, 24] });
+        return line;
+      }
+
+      fitPoints(points) {
+        const valid = (points || []).filter(Boolean);
+        if (!valid.length) return;
+        const bounds = L.latLngBounds(valid.map((p) => [p.lat, p.lng]));
+        this.map.fitBounds(bounds, { padding: [24, 24] });
+      }
+    }
+
+    class GoogleMapAdapter {
+      constructor(elementId, center, zoom = 6) {
+        this.map = new google.maps.Map(document.getElementById(elementId), {
+          center: { lat: center.lat, lng: center.lng },
+          zoom,
+          mapTypeControl: false,
+          streetViewControl: false
+        });
+
+        this.infoWindow = new google.maps.InfoWindow();
+        this.markers = [];
+        this.lines = [];
+      }
+
+      invalidate() {}
+
+      clear() {
+        this.markers.forEach((marker) => marker.setMap(null));
+        this.lines.forEach((line) => line.setMap(null));
+        this.markers = [];
+        this.lines = [];
+      }
+
+      addMarker({ lat, lng, color, title, popup }) {
+        const marker = new google.maps.Marker({
+          position: { lat, lng },
+          map: this.map,
+          title,
+          icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: color || "#94a3c4",
+            fillOpacity: 1,
+            strokeColor: "#ffffff",
+            strokeWeight: 2,
+            scale: 8
+          }
+        });
+
+        if (popup) {
+          marker.addListener("click", () => {
+            this.infoWindow.setContent(popup);
+            this.infoWindow.open({ map: this.map, anchor: marker });
+          });
+        }
+
+        this.markers.push(marker);
+        return marker;
+      }
+
+      drawPath(path, color = "#2f81f7") {
+        const pathPoints = (path || []).filter(Boolean).map((p) => ({ lat: p.lat, lng: p.lng }));
+        if (pathPoints.length < 2) return null;
+
+        const line = new google.maps.Polyline({
+          path: pathPoints,
+          geodesic: true,
+          strokeColor: color,
+          strokeOpacity: 0.9,
+          strokeWeight: 4
+        });
+
+        line.setMap(this.map);
+        this.lines.push(line);
+
+        const bounds = new google.maps.LatLngBounds();
+        pathPoints.forEach((point) => bounds.extend(point));
+        this.map.fitBounds(bounds, 24);
+
+        return line;
+      }
+
+      fitPoints(points) {
+        const valid = (points || []).filter(Boolean);
+        if (!valid.length) return;
+        const bounds = new google.maps.LatLngBounds();
+        valid.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
+        this.map.fitBounds(bounds, 24);
+      }
+    }
+
+    const MapFactory = {
+      async init(elementId, center = { lat: 20.5937, lng: 78.9629 }, zoom = 6) {
+        const element = document.getElementById(elementId);
+        if (!element) throw new Error("Map container missing");
+
+        const config = await getConfig();
+
+        if (config.mapProvider === "google" && config.googleMapsApiKey) {
+          try {
+            await loadGoogleMaps(config.googleMapsApiKey);
+            if (!window.google?.maps) throw new Error("Google Maps unavailable");
+            return new GoogleMapAdapter(elementId, center, zoom);
+          } catch (error) {
+            console.warn("Google Maps unavailable, falling back to Leaflet.", error);
+            toast("Google Maps unavailable. Using fallback map.", "warn");
+          }
+        }
+
+        if (typeof L === "undefined") {
+          throw new Error("Map library failed to load. Check internet access.");
+        }
+
+        return new LeafletAdapter(elementId, center, zoom);
+      }
+    };
+
+    async function onLogin(event) {
+      event.preventDefault();
+      const errorEl = $("#loginError");
+      errorEl.classList.add("hidden");
+
+      try {
+        const data = await api("/auth/login", {
+          method: "POST",
+          auth: false,
+          body: {
+            username: $("#loginUsername").value.trim(),
+            password: $("#loginPassword").value
+          }
+        });
+
+        state.token = data.token;
+        localStorage.setItem("fleet_token", data.token);
+        await bootstrap();
+      } catch (error) {
+        errorEl.textContent = error.message;
+        errorEl.classList.remove("hidden");
+      }
+    }
+
+    async function bootstrap() {
+      try {
+        const me = await api("/auth/me");
+        state.user = me.user;
+        state.managerContact = me.managerContact;
+
+        $("#loginView").classList.add("hidden");
+        $("#appView").classList.remove("hidden");
+
+        renderUserBox();
+
+        if (me.user.role === "manager") {
+          renderNav("manager");
+          $("#managerSection").classList.remove("hidden");
+          $("#driverSection").classList.add("hidden");
+          await loadManager();
+          showTab("tab-overview");
+        } else {
+          renderNav("driver");
+          $("#driverSection").classList.remove("hidden");
+          $("#managerSection").classList.add("hidden");
+          await loadDriver();
+          showTab("tab-driver");
+        }
+      } catch {
+        logout();
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("fleet_token");
+      state.token = "";
+      state.user = null;
+      state.manager = null;
+      state.driver = null;
+      state.fleetMap = null;
+      state.driverMap = null;
+      window.location.reload();
+    }
+
+    function renderUserBox() {
+      $("#userBox").innerHTML = `
+        <div><strong>${escapeHtml(state.user?.name || "")}</strong></div>
+        <div class="muted small">${escapeHtml(state.user?.role || "")} • ${escapeHtml(state.user?.username || "")}</div>
+      `;
+    }
+
+    function renderNav(role) {
+      const nav = $("#navMenu");
+
+      if (role === "manager") {
+        nav.innerHTML = `
+          <button class="nav-btn active" type="button" data-tab="tab-overview">Overview</button>
+          <button class="nav-btn" type="button" data-tab="tab-vehicles">Vehicles</button>
+          <button class="nav-btn" type="button" data-tab="tab-shipments">Shipments</button>
+          <button class="nav-btn" type="button" data-tab="tab-drivers">Drivers</button>
+        `;
+      } else {
+        nav.innerHTML = `
+          <button class="nav-btn active" type="button" data-tab="tab-driver">Driver Console</button>
+        `;
+      }
+
+      $$(".nav-btn", nav).forEach((btn) => {
+        btn.addEventListener("click", () => showTab(btn.dataset.tab));
+      });
+    }
+
+    function showTab(tabId) {
+      $$(".tab").forEach((tab) => tab.classList.add("hidden"));
+      const tab = document.getElementById(tabId);
+      if (tab) tab.classList.remove("hidden");
+
+      $$(".nav-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.tab === tabId);
+      });
+
+      if (tabId === "tab-overview" && state.fleetMap?.invalidate) {
+        state.fleetMap.invalidate();
+      }
+
+      if (tabId === "tab-driver" && state.driverMap?.invalidate) {
+        state.driverMap.invalidate();
+      }
+    }
+
+    async function loadManager() {
+      try {
+        state.manager = await api("/manager/dashboard");
+        renderManager();
+      } catch (error) {
+        toast(error.message, "error");
+        return;
+      }
+
+      try {
+        await renderFleetMap();
+      } catch (error) {
+        toast(`Map initialization failed: ${error.message}`, "warn");
+      }
+    }
+
+    function renderManager() {
+      renderKPIs();
+      renderDelayPanel();
+      renderOverviewShipments();
+      renderVehiclesTable();
+      renderShipmentsTable();
+      renderDriversTable();
+    }
+
+    function renderKPIs() {
+      const k = state.manager.kpi;
+
+      const items = [
+        ["Fleet vehicles", k.totalVehicles, ""],
+        ["Ready to load", k.ready_to_load, "good"],
+        ["Loaded", k.loaded, "info"],
+        ["Empty", k.empty, "warn"],
+        ["Delayed", k.delayedVehicles, "bad"],
+        ["Maintenance", k.maintenance, "warn"],
+        ["Active shipments", k.activeShipments, "info"],
+        ["On-time", k.onTimeShipments, "good"],
+        ["Utilization", `${k.utilization}%`, "info"]
+      ];
+
+      $("#kpiGrid").innerHTML = items.map(([label, value, tone]) => `
+        <div class="card kpi">
+          <div class="kpi-value ${tone}">${escapeHtml(value)}</div>
+          <div class="kpi-label">${escapeHtml(label)}</div>
+        </div>
+      `).join("");
+    }
+
+    async function renderFleetMap() {
+      const vehicles = state.manager.vehicles;
+      const center = vehicles[0]?.location || { lat: 20.5937, lng: 78.9629 };
+
+      if (!state.fleetMap) {
+        state.fleetMap = await MapFactory.init("fleetMap", center, 6);
+      } else {
+        state.fleetMap.clear();
+      }
+
+      const points = [];
+
+      vehicles.forEach((vehicle) => {
+        if (!vehicle.location) return;
+
+        const popup = `
+          <div class="map-popup">
+            <strong>${escapeHtml(vehicle.plate)}</strong><br />
+            ${escapeHtml(vehicle.status.replaceAll("_", " "))}<br />
+            Driver: ${escapeHtml(vehicle.driver?.name || "Unassigned")}<br />
+            ${vehicle.driver?.phone ? `<a href="${telHref(vehicle.driver.phone)}">${escapeHtml(vehicle.driver.phone)}</a>` : ""}
+          </div>
+        `;
+
+        state.fleetMap.addMarker({
+          lat: vehicle.location.lat,
+          lng: vehicle.location.lng,
+          color: statusColor(vehicle.status),
+          title: vehicle.plate,
+          popup
+        });
+
+        points.push(vehicle.location);
+      });
+
+      if (points.length) state.fleetMap.fitPoints(points);
+      $("#mapTimestamp").textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    }
+
+    function renderDelayPanel() {
+      const delayed = state.manager.delayedShipments;
+      const panel = $("#delayPanel");
+
+      if (!delayed.length) {
+        panel.innerHTML = `<div class="success-box">No delayed vehicles or shipments right now.</div>`;
+        return;
+      }
+
+      panel.innerHTML = delayed.map((shipment) => {
+        const availableVehicles = state.manager.vehicles.filter(
+          (v) => ["ready_to_load", "empty"].includes(v.status) && v.id !== shipment.vehicleId
+        );
+
+        const options = availableVehicles.map((v) => `
+          <option value="${v.id}">${escapeHtml(v.plate)} (${escapeHtml(v.status.replaceAll("_", " "))})</option>
+        `).join("");
+
+        return `
+          <div class="alert-card">
+            <div>
+              <strong>${escapeHtml(shipment.code)}</strong>
+              • ${escapeHtml(shipment.vehicle?.plate || "Unassigned")}
+              <div class="muted small">
+                ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
+                • ETA ${fmtDateTime(shipment.eta)}
+              </div>
+              <div class="muted small">
+                Driver: ${escapeHtml(shipment.driver?.name || "-")}
+                ${shipment.driver?.phone ? `• <a href="${telHref(shipment.driver.phone)}">${escapeHtml(shipment.driver.phone)}</a>` : ""}
+              </div>
+              <div class="muted small">Reason: ${escapeHtml(shipment.delayReason || "ETA passed")}</div>
+            </div>
+
+            <div class="row">
+              ${options
+                ? `
+                  <select id="reassign-${shipment.id}">${options}</select>
+                  <button class="btn warn" type="button" data-reassign="${shipment.id}">Assign replacement</button>
+                `
+                : `<span class="muted">No available vehicle. Add a vehicle first.</span>`}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderOverviewShipments() {
+      const active = state.manager.shipments.filter((s) => isShipmentActiveStatus(s.status));
+      active.sort(
+        (a, b) =>
+          (b.delayed ? 1 : 0) - (a.delayed ? 1 : 0) ||
+          new Date(a.eta || 0) - new Date(b.eta || 0)
+      );
+
+      $("#overviewShipments").innerHTML = shipmentTableHtml(active.slice(0, 10));
+    }
+
+    function shipmentTableHtml(shipments) {
+      if (!shipments.length) {
+        return `<div class="muted" style="padding:14px;">No shipments found.</div>`;
+      }
+
+      return `
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Route</th>
+              <th>Weight</th>
+              <th>Status</th>
+              <th>Vehicle</th>
+              <th>Manager status</th>
+              <th>ETA</th>
+              <th>Driver</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${shipments.map((shipment) => {
+              const vehicleOptions = `
+                <option value="">Unassigned</option>
+                ${state.manager.vehicles
+                  .filter((v) => v.status !== "maintenance")
+                  .map((v) => `
+                    <option value="${v.id}" ${shipment.vehicleId === v.id ? "selected" : ""}>
+                      ${escapeHtml(v.plate)}
+                    </option>
+                  `).join("")}
+              `;
+
+              const statusOptions = SHIPMENT_STATUS_LIST.map((status) => `
+                <option value="${status}" ${shipment.status === status ? "selected" : ""}>
+                  ${status.replaceAll("_", " ")}
+                </option>
+              `).join("");
+
+              return `
+                <tr class="${shipment.delayed ? "delayed-row" : ""}">
+                  <td><strong>${escapeHtml(shipment.code)}</strong></td>
+                  <td>
+                    ${escapeHtml(shipment.origin.label)}
+                    <div class="muted small">→ ${escapeHtml(shipment.destination.label)}</div>
+                  </td>
+                  <td>${escapeHtml(shipment.weightKg)} kg</td>
+                  <td>
+                    ${badge(shipment.status)}
+                    ${shipment.delayReason ? `<div class="muted small">${escapeHtml(shipment.delayReason)}</div>` : ""}
+                  </td>
+                  <td>
+                    <select data-shipment-vehicle="${shipment.id}">${vehicleOptions}</select>
+                  </td>
+                  <td>
+                    <select data-shipment-status="${shipment.id}">${statusOptions}</select>
+                  </td>
+                  <td>${fmtDateTime(shipment.eta)}</td>
+                  <td>
+                    ${shipment.driver
+                      ? `${escapeHtml(shipment.driver.name)}<br />
+                         <a href="${telHref(shipment.driver.phone)}">${escapeHtml(shipment.driver.phone || "")}</a>`
+                      : "-"}
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderVehiclesTable() {
+      $("#vehiclesTable").innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Plate</th>
+              <th>Type</th>
+              <th>Capacity</th>
+              <th>Status</th>
+              <th>Driver</th>
+              <th>Location</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.manager.vehicles.map((vehicle) => `
+              <tr>
+                <td><strong>${escapeHtml(vehicle.plate)}</strong></td>
+                <td>${escapeHtml(vehicle.type)}</td>
+                <td>${escapeHtml(vehicle.capacityKg)} kg</td>
+                <td>
+                  <select data-vehicle-status="${vehicle.id}">
+                    ${vehicleStatusOptions(vehicle.status)}
+                  </select>
+                </td>
+                <td>
+                  <select data-vehicle-driver="${vehicle.id}">
+                    <option value="">Unassigned</option>
+                    ${driverOptions(vehicle.driverId)}
+                  </select>
+                </td>
+                <td>
+                  ${vehicle.location
+                    ? `${Number(vehicle.location.lat).toFixed(3)}, ${Number(vehicle.location.lng).toFixed(3)}`
+                    : "-"}
+                </td>
+                <td>${fmtDateTime(vehicle.updatedAt)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function vehicleStatusOptions(selected) {
+      return VEHICLE_STATUS_LIST.map((status) => `
+        <option value="${status}" ${selected === status ? "selected" : ""}>
+          ${status.replaceAll("_", " ")}
+        </option>
+      `).join("");
+    }
+
+    function driverOptions(selectedId) {
+      return state.manager.drivers.map((driver) => `
+        <option value="${driver.id}" ${selectedId === driver.id ? "selected" : ""}>
+          ${escapeHtml(driver.name)}
+        </option>
+      `).join("");
+    }
+
+    function renderShipmentsTable() {
+      $("#shipmentsTable").innerHTML = shipmentTableHtml(state.manager.shipments);
+    }
+
+    function renderDriversTable() {
+      $("#driversTable").innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Username</th>
+              <th>Assigned vehicle</th>
+              <th>Contact</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.manager.drivers.map((driver) => `
+              <tr>
+                <td><strong>${escapeHtml(driver.name)}</strong></td>
+                <td>${escapeHtml(driver.phone || "-")}</td>
+                <td>${escapeHtml(driver.username)}</td>
+                <td>${escapeHtml(driver.assignedVehicle || "Unassigned")}</td>
+                <td>
+                  <a class="btn ghost small" href="${telHref(driver.phone)}">Call</a>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function openVehicleModal() {
+      const driverOpts = state.manager.drivers.map((driver) => `
+        <option value="${driver.id}">${escapeHtml(driver.name)}</option>
+      `).join("");
+
+      openModal("Add vehicle", `
+        <form id="vehicleForm">
+          <div class="form-grid">
+            <label>Plate *<input id="vPlate" required placeholder="DL-01-AB-1234" /></label>
+            <label>Type
+              <select id="vType">
+                <option>truck</option>
+                <option>van</option>
+                <option>pickup</option>
+                <option>tempo</option>
+              </select>
+            </label>
+            <label>Capacity kg<input id="vCapacity" type="number" min="0" value="1000" /></label>
+            <label>Status
+              <select id="vStatus">
+                ${VEHICLE_STATUS_LIST.map((status) => `
+                  <option value="${status}">${status.replaceAll("_", " ")}</option>
+                `).join("")}
+              </select>
+            </label>
+            <label>Driver
+              <select id="vDriver">
+                <option value="">Unassigned</option>
+                ${driverOpts}
+              </select>
+            </label>
+            <label>Latitude<input id="vLat" type="number" step="any" placeholder="20.5937" /></label>
+            <label>Longitude<input id="vLng" type="number" step="any" placeholder="78.9629" /></label>
+          </div>
+          <div class="row" style="margin-top:14px;">
+            <button class="btn primary" type="submit">Save vehicle</button>
+          </div>
+        </form>
+      `);
+
+      $("#vehicleForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        try {
+          const body = {
+            plate: $("#vPlate").value.trim(),
+            type: $("#vType").value,
+            capacityKg: Number($("#vCapacity").value || 0),
+            status: $("#vStatus").value,
+            driverId: $("#vDriver").value || null
+          };
+
+          const lat = Number($("#vLat").value);
+          const lng = Number($("#vLng").value);
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            body.location = { lat, lng };
+          }
+
+          await api("/vehicles", { method: "POST", body });
+          toast("Vehicle added", "success");
+          closeModal();
+          await loadManager();
+        } catch (error) {
+          toast(error.message, "error");
+        }
+      });
+    }
+
+    function openDriverModal() {
+      openModal("Add driver", `
+        <form id="driverForm">
+          <div class="form-grid">
+            <label>Name *<input id="dName" required placeholder="Driver name" /></label>
+            <label>Phone<input id="dPhone" placeholder="+91 98100 00000" /></label>
+            <label>Username *<input id="dUsername" required placeholder="driver@fleet.com" /></label>
+            <label>Password *<input id="dPassword" type="password" required minlength="6" /></label>
+          </div>
+          <div class="row" style="margin-top:14px;">
+            <button class="btn primary" type="submit">Save driver</button>
+          </div>
+        </form>
+      `);
+
+      $("#driverForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        try {
+          await api("/drivers", {
+            method: "POST",
+            body: {
+              name: $("#dName").value.trim(),
+              phone: $("#dPhone").value.trim(),
+              username: $("#dUsername").value.trim(),
+              password: $("#dPassword").value
+            }
+          });
+
+          toast("Driver added", "success");
+          closeModal();
+          await loadManager();
+        } catch (error) {
+          toast(error.message, "error");
+        }
+      });
+    }
+
+    function openShipmentModal() {
+      const vehicleOptions = state.manager.vehicles
+        .filter((v) => v.status !== "maintenance")
+        .map((v) => `<option value="${v.id}">${escapeHtml(v.plate)}</option>`)
+        .join("");
+
+      openModal("New shipment", `
+        <form id="shipmentForm">
+          <div class="form-grid">
+            <label>Origin label<input id="sOriginLabel" value="Warehouse A" required /></label>
+            <label>Destination label<input id="sDestLabel" value="Customer Hub" required /></label>
+
+            <label>Origin latitude<input id="sOriginLat" type="number" step="any" value="19.0760" /></label>
+            <label>Destination latitude<input id="sDestLat" type="number" step="any" value="28.6139" /></label>
+
+            <label>Origin longitude<input id="sOriginLng" type="number" step="any" value="72.8777" /></label>
+            <label>Destination longitude<input id="sDestLng" type="number" step="any" value="77.2090" /></label>
+
+            <label>Weight kg<input id="sWeight" type="number" min="0" value="500" /></label>
+            <label>ETA minutes<input id="sEta" type="number" min="5" value="90" /></label>
+
+            <label>Assign vehicle
+              <select id="sVehicle">
+                <option value="">Unassigned</option>
+                ${vehicleOptions}
+              </select>
+            </label>
+          </div>
+          <div class="row" style="margin-top:14px;">
+            <button class="btn primary" type="submit">Save shipment</button>
+          </div>
+        </form>
+      `);
+
+      $("#shipmentForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        try {
+          await api("/shipments", {
+            method: "POST",
+            body: {
+              originLabel: $("#sOriginLabel").value.trim(),
+              originLat: $("#sOriginLat").value,
+              originLng: $("#sOriginLng").value,
+              destinationLabel: $("#sDestLabel").value.trim(),
+              destinationLat: $("#sDestLat").value,
+              destinationLng: $("#sDestLng").value,
+              weightKg: $("#sWeight").value,
+              etaMinutes: $("#sEta").value,
+              vehicleId: $("#sVehicle").value || null
+            }
+          });
+
+          toast("Shipment created", "success");
+          closeModal();
+          await loadManager();
+        } catch (error) {
+          toast(error.message, "error");
+        }
+      });
+    }
+
+    function openDelayModal(shipmentId) {
+      openModal("Report delay", `
+        <form id="delayForm">
+          <label>Delay reason
+            <textarea id="delayNote" rows="4" placeholder="Traffic, weather, breakdown, road closure..."></textarea>
+          </label>
+          <div class="row" style="margin-top:12px;">
+            <button class="btn danger" type="submit">Submit delay</button>
+          </div>
+        </form>
+      `);
+
+      $("#delayForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        try {
+          await api(`/driver/shipments/${shipmentId}/status`, {
+            method: "POST",
+            body: {
+              status: "delayed",
+              note: $("#delayNote").value.trim()
+            }
+          });
+
+          toast("Delay reported to manager", "success");
+          closeModal();
+          await loadDriver();
+        } catch (error) {
+          toast(error.message, "error");
+        }
+      });
+    }
+
+    async function loadDriver() {
+      try {
+        state.driver = await api("/driver/me");
+        renderDriver();
+      } catch (error) {
+        toast(error.message, "error");
+        return;
+      }
+
+      try {
+        await analyzeRouteForActive(true);
+      } catch {
+        // Route analysis is non-blocking for driver console rendering.
+      }
+    }
+
+    function renderDriver() {
+      const data = state.driver;
+
+      $("#driverProfileCard").innerHTML = `
+        <div class="card-head"><h3>My profile</h3></div>
+        <p style="margin:8px 0;"><strong>${escapeHtml(data.user.name)}</strong></p>
+        <p class="muted" style="margin:8px 0;">${escapeHtml(data.user.username)} • ${escapeHtml(data.user.phone || "No phone")}</p>
+        <p style="margin:8px 0;">
+          Vehicle:
+          <strong>${escapeHtml(data.vehicle?.plate || "Not assigned")}</strong>
+          (${escapeHtml((data.vehicle?.status || "none").replaceAll("_", " "))})
+        </p>
+      `;
+
+      const manager = data.managerContact || state.managerContact;
+
+      $("#managerContactCard").innerHTML = `
+        <div class="card-head"><h3>Manager contact</h3></div>
+        <p style="margin:8px 0;"><strong>${escapeHtml(manager?.name || "Fleet Manager")}</strong></p>
+        <p class="muted" style="margin:8px 0;">${escapeHtml(manager?.phone || "No phone")}</p>
+        <div class="row">
+          <a class="btn" href="${telHref(manager?.phone)}">Call manager</a>
+          <button class="btn ghost" id="copyManagerPhone" type="button">Copy number</button>
+        </div>
+        <p class="muted small" style="margin-bottom:0;">
+          Use this contact for accidents, breakdowns, road closures, or delay escalation.
+        </p>
+      `;
+
+      $("#copyManagerPhone")?.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(manager?.phone || "");
+          toast("Manager number copied", "success");
+        } catch {
+          toast("Copy failed", "error");
+        }
+      });
+
+      renderDriverShipments();
+    }
+
+    function renderDriverShipments() {
+      const active = state.driver.activeShipments || [];
+      const history = (state.driver.shipments || []).filter(
+        (s) => !isShipmentActiveStatus(s.status)
+      );
+
+      const el = $("#driverShipments");
+
+      if (!active.length && !history.length) {
+        el.innerHTML = `<div class="muted">No shipments assigned.</div>`;
+        return;
+      }
+
+      const activeHtml = active.map((shipment) => `
+        <div class="shipment-card ${shipment.delayed ? "delayed" : ""}">
+          <div class="row spread">
+            <div>
+              <strong>${escapeHtml(shipment.code)}</strong>
+              <div class="muted small">
+                ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
+              </div>
+              <div class="muted small">
+                Weight ${escapeHtml(shipment.weightKg)} kg • ETA ${fmtDateTime(shipment.eta)} • ${badge(shipment.status)}
+              </div>
+              ${shipment.delayReason ? `<div class="error-text small">Delay: ${escapeHtml(shipment.delayReason)}</div>` : ""}
+            </div>
+
+            <div class="row">
+              <button class="btn" type="button" data-driver-action="in_transit" data-shipment="${shipment.id}">Depart</button>
+              <button class="btn" type="button" data-driver-action="arrived" data-shipment="${shipment.id}">Arrived</button>
+              <button class="btn success" type="button" data-driver-action="delivered" data-shipment="${shipment.id}">Delivered</button>
+              <button class="btn danger" type="button" data-driver-action="delayed" data-shipment="${shipment.id}">Report delay</button>
+              <button class="btn ghost" type="button" data-driver-route="${shipment.id}">Route</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+
+      const historyHtml = history.length
+        ? `<h4 class="muted">History</h4>` + history.slice(0, 5).map((shipment) => `
+          <div class="shipment-card">
+            <strong>${escapeHtml(shipment.code)}</strong>
+            <div class="muted small">
+              ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
+            </div>
+            <div class="muted small">${badge(shipment.status)} • Delivered ${fmtDateTime(shipment.deliveredAt)}</div>
+          </div>
+        `).join("")
+        : "";
+
+      el.innerHTML = activeHtml + historyHtml;
+    }
+
+    async function updateGps() {
+      if (!navigator.geolocation) {
+        toast("Geolocation is not supported by this browser.", "error");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            await api("/driver/gps", {
+              method: "POST",
+              body: {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+              }
+            });
+
+            toast("GPS location updated", "success");
+            await loadDriver();
+          } catch (error) {
+            toast(error.message, "error");
+          }
+        },
+        () => {
+          toast("Unable to access GPS. Grant location permission.", "error");
+        }
+      );
+    }
+
+    async function analyzeRouteForActive(silent = false) {
+      const active = state.driver?.activeShipments || [];
+      const intel = $("#routeIntel");
+
+      if (!active.length) {
+        intel.innerHTML = `<div class="muted">No active shipment for route analysis.</div>`;
+        return;
+      }
+
+      await analyzeRoute(active[0], silent);
+    }
+
+    async function analyzeRoute(shipment, silent = false) {
+      const intel = $("#routeIntel");
+
+      try {
+        intel.innerHTML = `<div class="muted">Analyzing destination weather and route risk...</div>`;
+
+        const params = new URLSearchParams({
+          originLat: shipment.origin.lat,
+          originLng: shipment.origin.lng,
+          destinationLat: shipment.destination.lat,
+          destinationLng: shipment.destination.lng
+        });
+
+        const data = await api(`/route/recommend?${params.toString()}`);
+        renderRouteIntel(data, shipment);
+        await renderRouteMap(data, shipment);
+
+        if (!silent) toast("Route analysis complete", "success");
+      } catch (error) {
+        intel.innerHTML = `<div class="error-text">${escapeHtml(error.message)}</div>`;
+        if (!silent) toast(error.message, "error");
+      }
+    }
+
+    function renderRouteIntel(data, shipment) {
+      const weather = data.weather;
+      const recommended = data.options.find((option) => option.id === data.recommendedId);
+      const weatherTone =
+        weather.level === "severe"
+          ? "bad"
+          : weather.level === "caution"
+            ? "warn"
+            : weather.level === "good"
+              ? "good"
+              : "info";
+
+      $("#routeIntel").innerHTML = `
+        <div class="muted small">
+          ${escapeHtml(shipment.code)}: ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
+        </div>
+
+        <div class="weather-badge ${weatherTone}">
+          ${escapeHtml(weather.level.toUpperCase())}: ${escapeHtml(weather.summary)}
+        </div>
+
+        <p class="muted small">
+          Temperature: ${weather.raw?.temperature ?? "-"}°C •
+          Wind: ${weather.raw?.windspeed ?? "-"} km/h •
+          Google Distance Matrix used: ${data.googleUsed ? "Yes" : "No"}
+        </p>
+
+        <div class="recommended-box">
+          <strong>Recommended: ${escapeHtml(recommended.name)}</strong>
+          <div class="muted small">${escapeHtml(data.recommendationReason)}</div>
+          <div class="row small" style="margin-top:8px;">
+            <span>Distance: ${escapeHtml(recommended.distanceKm)} km</span>
+            <span>ETA: ${escapeHtml(recommended.etaMinutes)} min</span>
+            <span>Risk: ${escapeHtml(recommended.riskScore)}/100 (${escapeHtml(recommended.riskLevel)})</span>
+          </div>
+        </div>
+
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>Route</th>
+              <th>Distance</th>
+              <th>ETA</th>
+              <th>Risk</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.options.map((option) => `
+              <tr class="${option.id === data.recommendedId ? "selected-row" : ""}">
+                <td>${escapeHtml(option.name)}</td>
+                <td>${escapeHtml(option.distanceKm)} km</td>
+                <td>${escapeHtml(option.etaMinutes)} min</td>
+                <td>${escapeHtml(option.riskScore)} (${escapeHtml(option.riskLevel)})</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function renderRouteMap(data, shipment) {
+      const origin = shipment.origin;
+      const destination = shipment.destination;
+
+      if (!state.driverMap) {
+        state.driverMap = await MapFactory.init("driverMap", origin, 6);
+      } else {
+        state.driverMap.clear();
+      }
+
+      state.driverMap.addMarker({
+        lat: origin.lat,
+        lng: origin.lng,
+        color: "#22c55e",
+        title: "Origin",
+        popup: `<div class="map-popup">Origin: ${escapeHtml(origin.label)}</div>`
+      });
+
+      state.driverMap.addMarker({
+        lat: destination.lat,
+        lng: destination.lng,
+        color: "#ef4444",
+        title: "Destination",
+        popup: `<div class="map-popup">Destination: ${escapeHtml(destination.label)}</div>`
+      });
+
+      const recommended = data.options.find((option) => option.id === data.recommendedId);
+      const alternate = data.options.find((option) => option.id !== data.recommendedId);
+
+      if (alternate) {
+        state.driverMap.drawPath(alternate.path, "#94a3c4", true);
+      }
+
+      if (recommended) {
+        state.driverMap.drawPath(
+          recommended.path,
+          data.recommendedId === "alternate" ? "#f59e0b" : "#2f81f7"
+        );
+      }
+
+      state.driverMap.fitPoints([origin, destination]);
+    }
+
+    async function handleGlobalClicks(event) {
+      const addVehicle = event.target.closest(".js-add-vehicle");
+      if (addVehicle) {
+        openVehicleModal();
+        return;
+      }
+
+      const addDriver = event.target.closest(".js-add-driver");
+      if (addDriver) {
+        openDriverModal();
+        return;
+      }
+
+      const addShipment = event.target.closest(".js-add-shipment");
+      if (addShipment) {
+        openShipmentModal();
+        return;
+      }
+
+      const reassignBtn = event.target.closest("[data-reassign]");
+      if (reassignBtn) {
+        const shipmentId = reassignBtn.dataset.reassign;
+        const select = document.getElementById(`reassign-${shipmentId}`);
+
+        if (!select || !select.value) {
+          toast("Choose a replacement vehicle first.", "warn");
+          return;
+        }
+
+        reassignBtn.disabled = true;
+
+        try {
+          await api(`/shipments/${shipmentId}/reassign`, {
+            method: "POST",
+            body: {
+              newVehicleId: select.value,
+              reason: "Manager delay resolution"
+            }
+          });
+
+          toast("Replacement vehicle assigned.", "success");
+          await loadManager();
+        } catch (error) {
+          toast(error.message, "error");
+          reassignBtn.disabled = false;
+        }
+
+        return;
+      }
+
+      const driverAction = event.target.closest("[data-driver-action]");
+      if (driverAction) {
+        const shipmentId = driverAction.dataset.shipment;
+        const status = driverAction.dataset.driverAction;
+
+        if (status === "delayed") {
+          openDelayModal(shipmentId);
+          return;
+        }
+
+        driverAction.disabled = true;
+
+        try {
+          await api(`/driver/shipments/${shipmentId}/status`, {
+            method: "POST",
+            body: { status }
+          });
+
+          toast("Shipment updated", "success");
+          await loadDriver();
+        } catch (error) {
+          toast(error.message, "error");
+          driverAction.disabled = false;
+        }
+
+        return;
+      }
+
+      const routeBtn = event.target.closest("[data-driver-route]");
+      if (routeBtn) {
+        const shipment = (state.driver?.shipments || []).find(
+          (s) => s.id === routeBtn.dataset.driverRoute
+        );
+
+        if (shipment) await analyzeRoute(shipment, false);
+      }
+    }
+
+    async function handleGlobalChanges(event) {
+      const vehicleStatusEl = event.target.closest("[data-vehicle-status]");
+      if (vehicleStatusEl) {
+        try {
+          await api(`/vehicles/${vehicleStatusEl.dataset.vehicleStatus}`, {
+            method: "PATCH",
+            body: { status: vehicleStatusEl.value }
+          });
+          toast("Vehicle status updated", "success");
+          await loadManager();
+        } catch (error) {
+          toast(error.message, "error");
+        }
+        return;
+      }
+
+      const vehicleDriverEl = event.target.closest("[data-vehicle-driver]");
+      if (vehicleDriverEl) {
+        try {
+          await api(`/vehicles/${vehicleDriverEl.dataset.vehicleDriver}`, {
+            method: "PATCH",
+            body: { driverId: vehicleDriverEl.value || null }
+          });
+          toast("Driver assignment updated", "success");
+          await loadManager();
+        } catch (error) {
+          toast(error.message, "error");
+        }
+        return;
+      }
+
+      const shipmentVehicleEl = event.target.closest("[data-shipment-vehicle]");
+      if (shipmentVehicleEl) {
+        try {
+          await api(`/shipments/${shipmentVehicleEl.dataset.shipmentVehicle}`, {
+            method: "PATCH",
+            body: { vehicleId: shipmentVehicleEl.value || null }
+          });
+          toast("Shipment vehicle updated", "success");
+          await loadManager();
+        } catch (error) {
+          toast(error.message, "error");
+        }
+        return;
+      }
+
+      const shipmentStatusEl = event.target.closest("[data-shipment-status]");
+      if (shipmentStatusEl) {
+        try {
+          await api(`/shipments/${shipmentStatusEl.dataset.shipmentStatus}`, {
+            method: "PATCH",
+            body: { status: shipmentStatusEl.value }
+          });
+          toast("Shipment status updated", "success");
+          await loadManager();
+        } catch (error) {
+          toast(error.message, "error");
+        }
+      }
+    }
+
+    function init() {
+      $("#loginForm").addEventListener("submit", onLogin);
+      $("#logoutBtn").addEventListener("click", logout);
+      $("#refreshManagerBtn").addEventListener("click", loadManager);
+      $("#refreshDriverBtn").addEventListener("click", loadDriver);
+      $("#updateGpsBtn").addEventListener("click", updateGps);
+      $("#analyzeRouteBtn").addEventListener("click", () => analyzeRouteForActive(false));
+
+      $$(".demo-fill").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const username = $("#loginUsername");
+          const password = $("#loginPassword");
+
+          if (btn.dataset.fill === "manager") {
+            username.value = "manager@fleet.com";
+            password.value = "Manager@123";
+          } else {
+            username.value = "driver1@fleet.com";
+            password.value = "Driver@123";
+          }
+        });
+      });
+
+      document.addEventListener("click", handleGlobalClicks);
+      document.addEventListener("change", handleGlobalChanges);
+
+      if (state.token) {
+        bootstrap();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
