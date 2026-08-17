@@ -4,101 +4,279 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Smart Fleet Coordination and Logistics Management Platform</title>
+  
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Premium Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg:#07111f; --card:#111e38; --line:rgba(255,255,255,.09); --text:#e8eefc; --muted:#94a3c4;
-      --brand:#2f81f7; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444; --info:#38bdf8;
+      /* Modern Dark Color Palette */
+      --bg-base: #0B1120;
+      --bg-surface: #111827;
+      --bg-panel: rgba(30, 41, 59, 0.6);
+      --line: rgba(255, 255, 255, 0.08);
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      
+      --brand: #3B82F6;
+      --brand-glow: rgba(59, 130, 246, 0.4);
+      --brand-hover: #2563EB;
+      
+      --good: #10B981;
+      --good-bg: rgba(16, 185, 129, 0.1);
+      --warn: #F59E0B;
+      --warn-bg: rgba(245, 158, 11, 0.1);
+      --bad: #EF4444;
+      --bad-bg: rgba(239, 68, 68, 0.1);
+      --info: #0EA5E9;
+      --info-bg: rgba(14, 165, 233, 0.1);
+      
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --shadow-glow: 0 0 20px var(--brand-glow);
     }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,Segoe UI,sans-serif;background:radial-gradient(circle at top left,rgba(47,129,247,.18),transparent 30%),var(--bg);color:var(--text)}
-    button,input,select,textarea{font:inherit;color:inherit}
-    a{color:var(--info);text-decoration:none}
-    a:hover{text-decoration:underline}
-    .hidden{display:none!important}
-    .muted{color:var(--muted)}
-    .small{font-size:13px}
-    .login-wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015)),var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 18px 60px rgba(0,0,0,.28)}
-    .login-card{width:min(430px,94vw);display:grid;gap:14px}
-    label{display:grid;gap:7px;margin:12px 0;color:var(--muted);font-size:14px}
-    input,select,textarea{width:100%;background:#0a1426;border:1px solid var(--line);border-radius:12px;padding:11px 12px;outline:none}
-    input:focus,select:focus,textarea:focus{border-color:rgba(47,129,247,.75);box-shadow:0 0 0 3px rgba(47,129,247,.15)}
-    .btn{border:1px solid var(--line);background:#17294d;color:var(--text);border-radius:12px;padding:10px 14px;cursor:pointer;transition:180ms ease;white-space:nowrap}
-    .btn:hover{transform:translateY(-1px)}
-    .btn.primary{background:var(--brand);border-color:transparent}
-    .btn.success{background:#14532d}
-    .btn.danger{background:#7f1d1d}
-    .btn.warn{background:#78350f}
-    .btn.ghost{background:transparent}
-    .btn.block{width:100%}
-    .btn.small{padding:7px 10px;font-size:13px}
-    .demo-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-    .error-text{color:#fca5a5}
-    .success-box{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.24);color:#bbf7d0;border-radius:14px;padding:14px}
-    .app-shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
-    .sidebar{padding:20px;border-right:1px solid var(--line);background:rgba(6,13,27,.72);backdrop-filter:blur(12px);display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh}
-    .brand h2{margin:0;font-size:24px}
-    .brand span{color:var(--muted);font-size:13px}
-    .nav-menu{display:grid;gap:8px}
-    .nav-btn{width:100%;text-align:left;padding:11px 12px;border-radius:12px;background:transparent;border:1px solid transparent;color:var(--muted);cursor:pointer}
-    .nav-btn:hover,.nav-btn.active{background:rgba(47,129,247,.12);color:var(--text);border-color:rgba(47,129,247,.24)}
-    .user-box{margin-top:auto;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:12px}
-    .main{padding:22px;min-width:0}
-    .page-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
-    .page-head h1{margin:0;font-size:30px;line-height:1.15}
-    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin-bottom:18px}
-    .kpi{padding:16px}
-    .kpi-value{font-size:30px;font-weight:700}
-    .kpi-label{color:var(--muted);margin-top:6px;font-size:14px}
-    .good{color:#86efac}.warn{color:#fcd34d}.bad{color:#fca5a5}.info{color:#7dd3fc}
-    .split{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;margin-bottom:18px}
-    .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-    .card-head h3{margin:0;font-size:18px}
-    .map{height:460px;border-radius:14px;overflow:hidden;border:1px solid var(--line);z-index:0}
-    .leaflet-container{z-index:0}
-    .table-wrap{overflow:auto;border-radius:14px;border:1px solid var(--line)}
-    table{width:100%;border-collapse:collapse;min-width:860px}
-    th,td{padding:12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-    th{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.45px;background:rgba(255,255,255,.02);position:sticky;top:0}
-    tr:last-child td{border-bottom:none}
-    tr.delayed-row td{background:rgba(239,68,68,.07)}
-    .badge{display:inline-flex;align-items:center;min-height:28px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;text-transform:capitalize;background:rgba(255,255,255,.05)}
-    .badge.good{border-color:rgba(34,197,94,.35);color:#bbf7d0}
-    .badge.warn{border-color:rgba(245,158,11,.35);color:#fde68a}
-    .badge.bad{border-color:rgba(239,68,68,.35);color:#fecaca}
-    .badge.info{border-color:rgba(56,189,248,.35);color:#bae6fd}
-    .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .spread{justify-content:space-between;align-items:flex-start}
-    .alert-card{border:1px solid rgba(239,68,68,.28);background:rgba(239,68,68,.08);border-radius:14px;padding:14px;display:grid;gap:12px;margin-bottom:12px}
-    .shipment-card{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;background:rgba(255,255,255,.02)}
-    .shipment-card.delayed{border-color:rgba(239,68,68,.28);background:rgba(239,68,68,.07)}
-    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,16,.72);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:2000;padding:20px}
-    .modal{width:min(760px,96vw);max-height:88vh;overflow:auto;background:#0d1830;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 30px 90px rgba(0,0,0,.45)}
-    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
-    .toast-root{position:fixed;right:18px;bottom:18px;display:grid;gap:10px;z-index:3000;max-width:min(380px,calc(100vw - 36px))}
-    .toast{padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#132341;box-shadow:0 18px 50px rgba(0,0,0,.3)}
-    .toast.success{border-color:rgba(34,197,94,.35)}
-    .toast.error{border-color:rgba(239,68,68,.4)}
-    .toast.warn{border-color:rgba(245,158,11,.4)}
-    .weather-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);margin:10px 10px 0 0;font-weight:600}
-    .weather-badge.good{border-color:rgba(34,197,94,.35);color:#bbf7d0}
-    .weather-badge.warn{border-color:rgba(245,158,11,.35);color:#fde68a}
-    .weather-badge.bad{border-color:rgba(239,68,68,.35);color:#fecaca}
-    .weather-badge.info{border-color:rgba(56,189,248,.35);color:#bae6fd}
-    .recommended-box{border:1px solid rgba(56,189,248,.28);background:rgba(56,189,248,.08);border-radius:14px;padding:14px;margin:12px 0}
-    .mini-table{width:100%;border-collapse:collapse;margin-top:12px}
-    .mini-table th,.mini-table td{padding:9px 8px}
-    .selected-row td{background:rgba(56,189,248,.08)}
-    .map-popup{color:#08101f;font-size:13px;line-height:1.4;min-width:170px}
-    @media (max-width:980px){
-      .app-shell{grid-template-columns:1fr}
-      .sidebar{position:relative;height:auto;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap}
-      .nav-menu{display:flex;flex-wrap:wrap}
-      .user-box{margin-top:0}
-      .split{grid-template-columns:1fr}
-      .form-grid{grid-template-columns:1fr}
-      .map{height:360px}
+
+    /* Base Setup & Typography */
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    
+    /* Ambient Background Glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.08), transparent 30%),
+                  radial-gradient(circle at 70% 70%, rgba(16, 185, 129, 0.05), transparent 30%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-base); }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    button, input, select, textarea { font: inherit; color: inherit; }
+    a { color: var(--brand); text-decoration: none; transition: 0.2s; }
+    a:hover { color: #60A5FA; }
+    h1, h2, h3 { margin: 0; font-weight: 700; tracking: -0.02em; }
+    
+    .hidden { display: none !important; }
+    .muted { color: var(--text-muted); }
+    .small { font-size: 0.85rem; }
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+    .info { color: var(--info); }
+
+    /* Layout & Cards */
+    .login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+    
+    .card {
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .login-card { width: min(460px, 94vw); display: grid; gap: 20px; padding: 40px; box-shadow: var(--shadow-lg), 0 0 40px rgba(0,0,0,0.5); }
+    .login-card h1 { font-size: 28px; text-align: center; }
+    .login-card p { text-align: center; margin-top: 0; color: var(--text-muted); }
+
+    /* Forms & Inputs */
+    label { display: grid; gap: 8px; margin: 16px 0; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; }
+    input, select, textarea {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      background: rgba(15, 23, 42, 0.9);
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border-radius: var(--radius-md);
+      padding: 12px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    
+    .btn.primary { background: linear-gradient(135deg, var(--brand), #2563EB); border: none; box-shadow: var(--shadow-sm); }
+    .btn.primary:hover { box-shadow: var(--shadow-glow); }
+    .btn.success { background: linear-gradient(135deg, var(--good), #059669); border: none; }
+    .btn.danger { background: linear-gradient(135deg, var(--bad), #DC2626); border: none; }
+    .btn.warn { background: linear-gradient(135deg, var(--warn), #D97706); border: none; }
+    .btn.ghost { background: transparent; border-color: transparent; }
+    .btn.ghost:hover { background: rgba(255, 255, 255, 0.05); }
+    .btn.block { width: 100%; }
+    .btn.small { padding: 8px 14px; font-size: 0.85rem; border-radius: var(--radius-sm); }
+
+    /* App Shell & Layout */
+    .app-shell { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+    
+    .sidebar {
+      padding: 24px;
+      border-right: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      display: flex; flex-direction: column; gap: 24px;
+      position: sticky; top: 0; height: 100vh;
+      z-index: 10;
+    }
+    
+    .brand h2 { font-size: 24px; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .brand span { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+    
+    .nav-menu { display: grid; gap: 6px; }
+    .nav-btn {
+      width: 100%; text-align: left; padding: 12px 16px; border-radius: var(--radius-md);
+      background: transparent; border: 1px solid transparent; color: var(--text-muted);
+      cursor: pointer; font-weight: 500; transition: all 0.2s;
+    }
+    .nav-btn:hover { background: rgba(255, 255, 255, 0.03); color: var(--text-main); }
+    .nav-btn.active { background: var(--brand-glow); color: var(--text-main); border-color: rgba(59, 130, 246, 0.3); font-weight: 600; }
+    
+    .user-box {
+      margin-top: auto; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--line);
+      border-radius: var(--radius-lg); padding: 16px;
+    }
+
+    .main { padding: 32px; min-width: 0; max-width: 1600px; margin: 0 auto; width: 100%; }
+    
+    .page-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .page-head h1 { font-size: 32px; letter-spacing: -0.03em; }
+    
+    /* Dashboard Elements */
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi { padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+    .kpi-value { font-size: 32px; font-weight: 800; line-height: 1; }
+    .kpi-label { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .split { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px; }
+    
+    .card-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    .card-head h3 { font-size: 18px; font-weight: 600; }
+    
+    /* Map */
+    .map { height: 500px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--line); z-index: 0; background: #1E293B; }
+    .leaflet-container { z-index: 0; font-family: inherit; }
+    .leaflet-popup-content-wrapper { background: var(--bg-surface); color: var(--text-main); border-radius: 12px; border: 1px solid var(--line); box-shadow: var(--shadow-lg); }
+    .leaflet-popup-tip { background: var(--bg-surface); }
+    .map-popup { font-size: 13px; line-height: 1.5; min-width: 180px; }
+
+    /* Tables */
+    .table-wrap { overflow: auto; border-radius: var(--radius-md); border: 1px solid var(--line); background: rgba(15, 23, 42, 0.4); }
+    table { width: 100%; border-collapse: collapse; min-width: 900px; text-align: left; }
+    th, td { padding: 16px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    th { color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(0, 0, 0, 0.2); position: sticky; top: 0; backdrop-filter: blur(8px); }
+    tr { transition: background 0.15s; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    tr:last-child td { border-bottom: none; }
+    tr.delayed-row td { background: var(--bad-bg); }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge.good { background: var(--good-bg); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .badge.warn { background: var(--warn-bg); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .badge.bad { background: var(--bad-bg); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+    .badge.info { background: var(--info-bg); color: #38BDF8; border: 1px solid rgba(14, 165, 233, 0.2); }
+
+    /* Utilities */
+    .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .spread { justify-content: space-between; align-items: flex-start; }
+    .error-text { color: #F87171; font-size: 0.9rem; margin-top: 4px; }
+    .success-box { background: var(--good-bg); border: 1px solid rgba(16, 185, 129, 0.3); color: #34D399; border-radius: var(--radius-md); padding: 16px; font-weight: 500; }
+    .demo-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+
+    /* Cards - Alerts & Shipments */
+    .alert-card { border: 1px solid rgba(239, 68, 68, 0.3); background: var(--bad-bg); border-radius: var(--radius-md); padding: 16px; display: grid; gap: 16px; margin-bottom: 16px; }
+    .shipment-card { border: 1px solid var(--line); border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px; background: rgba(255, 255, 255, 0.02); transition: transform 0.2s; }
+    .shipment-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.15); }
+    .shipment-card.delayed { border-color: rgba(239, 68, 68, 0.4); background: var(--bad-bg); }
+
+    /* Modals */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: grid; place-items: center; z-index: 2000; padding: 20px; animation: fadeIn 0.2s ease-out; }
+    .modal { width: min(800px, 96vw); max-height: 90vh; overflow-y: auto; background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--radius-xl); padding: 32px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 20px; }
+
+    /* Toasts */
+    .toast-root { position: fixed; right: 24px; bottom: 24px; display: grid; gap: 12px; z-index: 3000; max-width: min(400px, calc(100vw - 48px)); }
+    .toast { padding: 16px 20px; border-radius: var(--radius-md); border: 1px solid var(--line); background: var(--bg-surface); box-shadow: var(--shadow-lg); font-weight: 500; animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .toast.success { border-left: 4px solid var(--good); }
+    .toast.error { border-left: 4px solid var(--bad); }
+    .toast.warn { border-left: 4px solid var(--warn); }
+
+    /* Weather & AI Boxes */
+    .weather-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 99px; border: 1px solid var(--line); margin: 0 12px 12px 0; font-size: 0.85rem; font-weight: 600; background: rgba(0,0,0,0.2); }
+    .weather-badge.good { border-color: rgba(16, 185, 129, 0.4); color: #34D399; }
+    .weather-badge.warn { border-color: rgba(245, 158, 11, 0.4); color: #FBBF24; }
+    .weather-badge.bad { border-color: rgba(239, 68, 68, 0.4); color: #F87171; }
+    .weather-badge.info { border-color: rgba(14, 165, 233, 0.4); color: #38BDF8; }
+    
+    .recommended-box { border: 1px solid rgba(14, 165, 233, 0.3); background: var(--info-bg); border-radius: var(--radius-md); padding: 20px; margin: 16px 0; }
+    .mini-table { width: 100%; border-collapse: collapse; margin-top: 16px; background: rgba(0,0,0,0.15); border-radius: var(--radius-md); overflow: hidden; }
+    .mini-table th, .mini-table td { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    .selected-row td { background: var(--info-bg); border-color: rgba(14, 165, 233, 0.2); }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--line); padding: 16px 24px; }
+      .nav-menu { display: flex; flex-wrap: wrap; gap: 8px; }
+      .nav-btn { width: auto; padding: 8px 16px; }
+      .user-box { margin-top: 0; padding: 12px; }
+      .split { grid-template-columns: 1fr; }
+      .main { padding: 20px; }
+      .map { height: 400px; }
+    }
+    @media (max-width: 640px) {
+      .page-head h1 { font-size: 24px; }
+      .card { padding: 16px; }
+      .kpi-value { font-size: 24px; }
     }
   </style>
 </head>
@@ -108,8 +286,10 @@
 
   <div id="loginView" class="login-wrap">
     <div class="card login-card">
-      <h1>Smart Fleet Control</h1>
-      <p>Sign in to access fleet coordination, shipment tracking, and route intelligence.</p>
+      <div>
+        <h1>Smart Fleet Control</h1>
+        <p>Sign in to access fleet coordination, shipment tracking, and route intelligence.</p>
+      </div>
 
       <form id="loginForm">
         <label>
@@ -124,12 +304,12 @@
 
         <div id="loginError" class="error-text hidden"></div>
 
-        <button class="btn primary block" type="submit">Sign in</button>
+        <button class="btn primary block" type="submit" style="margin-top: 8px;">Sign in securely</button>
       </form>
 
       <div class="demo-row">
-        <button class="btn demo-fill" type="button" data-fill="manager">Manager</button>
-        <button class="btn demo-fill" type="button" data-fill="driver">Driver</button>
+        <button class="btn demo-fill block" type="button" data-fill="manager">Load Manager</button>
+        <button class="btn demo-fill block" type="button" data-fill="driver">Load Driver</button>
       </div>
 
       <p class="muted small">
@@ -150,14 +330,14 @@
 
       <div id="userBox" class="user-box"></div>
 
-      <button id="logoutBtn" class="btn ghost block" type="button">Logout</button>
+      <button id="logoutBtn" class="btn ghost block" type="button">Logout securely</button>
     </aside>
 
     <main class="main">
       <section id="managerSection" class="hidden">
         <header class="page-head">
           <h1>Manager Control Center</h1>
-          <button id="refreshManagerBtn" class="btn" type="button">Refresh</button>
+          <button id="refreshManagerBtn" class="btn primary" type="button">Refresh Dashboard</button>
         </header>
 
         <section id="tab-overview" class="tab">
@@ -224,20 +404,20 @@
             <div class="card-head">
               <h3>Hourly driver monitoring</h3>
               <div class="row">
-                <button id="createSnapshotBtn" class="btn" type="button">Capture hourly snapshot</button>
-                <button id="refreshMonitorBtn" class="btn" type="button">Refresh</button>
+                <button id="createSnapshotBtn" class="btn primary" type="button">Capture snapshot</button>
+                <button id="refreshMonitorBtn" class="btn ghost" type="button">Refresh</button>
               </div>
             </div>
 
-            <div class="row" style="margin-bottom:14px;">
+            <div class="row" style="margin-bottom:20px;">
               <button id="prevDriverBtn" class="btn" type="button">Previous</button>
-              <select id="monitorDriverSelect"></select>
+              <select id="monitorDriverSelect" style="max-width: 300px;"></select>
               <button id="nextDriverBtn" class="btn" type="button">Next</button>
             </div>
 
             <div id="driverMonitorSummary"></div>
 
-            <div id="driverMonitorMap" class="map" style="margin:14px 0;"></div>
+            <div id="driverMonitorMap" class="map" style="margin:20px 0;"></div>
 
             <div id="driverMonitorDetails"></div>
           </div>
@@ -248,22 +428,22 @@
         <section id="tab-driver" class="tab">
           <header class="page-head">
             <h1>Driver Console</h1>
-            <button id="refreshDriverBtn" class="btn" type="button">Refresh</button>
+            <button id="refreshDriverBtn" class="btn primary" type="button">Refresh Data</button>
           </header>
 
-          <div class="card" id="driverTripCard" style="margin-bottom:18px;">
+          <div class="card" id="driverTripCard" style="margin-bottom:24px;">
             <div class="card-head">
               <h3>Live trip intelligence</h3>
               <div class="row">
-                <button id="analyzeAlternateRouteBtn" class="btn" type="button">Analyze AI route</button>
-                <button id="refreshTripBtn" class="btn" type="button">Refresh trip</button>
+                <button id="analyzeAlternateRouteBtn" class="btn primary" type="button">Analyze AI route</button>
+                <button id="refreshTripBtn" class="btn ghost" type="button">Refresh trip</button>
               </div>
             </div>
 
             <div id="tripIntel"></div>
             <div id="routeRecommendation"></div>
 
-            <div id="tripMap" class="map" style="margin-top:14px;"></div>
+            <div id="tripMap" class="map" style="margin-top:20px;"></div>
           </div>
 
           <div class="split">
@@ -271,10 +451,10 @@
             <div id="managerContactCard" class="card"></div>
           </div>
 
-          <div class="card" style="margin-bottom:18px;">
+          <div class="card" style="margin-bottom:24px;">
             <div class="card-head">
               <h3>Assigned shipments</h3>
-              <button id="updateGpsBtn" class="btn" type="button">Update my GPS</button>
+              <button id="updateGpsBtn" class="btn primary" type="button">Update my GPS</button>
             </div>
             <div id="driverShipments"></div>
           </div>
@@ -397,11 +577,11 @@
     }
 
     function statusColor(status) {
-      if (status === "ready_to_load") return "#22c55e";
-      if (status === "loaded") return "#38bdf8";
-      if (status === "empty") return "#f59e0b";
-      if (status === "delayed") return "#ef4444";
-      return "#94a3c4";
+      if (status === "ready_to_load") return "#10B981";
+      if (status === "loaded") return "#0EA5E9";
+      if (status === "empty") return "#F59E0B";
+      if (status === "delayed") return "#EF4444";
+      return "#94A3B8";
     }
 
     function badge(status) {
@@ -505,8 +685,8 @@
       constructor(elementId, center, zoom = 6) {
         this.map = L.map(elementId).setView([center.lat, center.lng], zoom);
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "&copy; OpenStreetMap contributors"
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+          attribution: "&copy; OpenStreetMap &copy; CARTO"
         }).addTo(this.map);
 
         this.markers = [];
@@ -527,7 +707,7 @@
       addMarker({ lat, lng, color, title, popup }) {
         const marker = L.circleMarker([lat, lng], {
           radius: 8,
-          fillColor: color || "#94a3c4",
+          fillColor: color || "#94a3b8",
           color: "#ffffff",
           weight: 2,
           fillOpacity: 0.95,
@@ -540,7 +720,7 @@
         return marker;
       }
 
-      drawPath(path, color = "#2f81f7", dashed = false) {
+      drawPath(path, color = "#3b82f6", dashed = false) {
         const pathPoints = (path || []).filter(Boolean).map((p) => [p.lat, p.lng]);
         if (pathPoints.length < 2) return null;
 
@@ -572,7 +752,12 @@
           center: { lat: center.lat, lng: center.lng },
           zoom,
           mapTypeControl: false,
-          streetViewControl: false
+          streetViewControl: false,
+          styles: [
+            { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] }
+          ]
         });
 
         this.infoWindow = new google.maps.InfoWindow();
@@ -596,7 +781,7 @@
           title,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
-            fillColor: color || "#94a3c4",
+            fillColor: color || "#94a3b8",
             fillOpacity: 1,
             strokeColor: "#ffffff",
             strokeWeight: 2,
@@ -615,7 +800,7 @@
         return marker;
       }
 
-      drawPath(path, color = "#2f81f7") {
+      drawPath(path, color = "#3b82f6") {
         const pathPoints = (path || []).filter(Boolean).map((p) => ({ lat: p.lat, lng: p.lng }));
         if (pathPoints.length < 2) return null;
 
@@ -738,8 +923,8 @@
 
     function renderUserBox() {
       $("#userBox").innerHTML = `
-        <div><strong>${escapeHtml(state.user?.name || "")}</strong></div>
-        <div class="muted small">${escapeHtml(state.user?.role || "")} • ${escapeHtml(state.user?.username || "")}</div>
+        <div style="font-weight: 600; font-size: 15px;">${escapeHtml(state.user?.name || "")}</div>
+        <div class="muted small" style="margin-top: 4px;">${escapeHtml(state.user?.role || "")} • ${escapeHtml(state.user?.username || "")}</div>
       `;
     }
 
@@ -748,11 +933,11 @@
 
       if (role === "manager") {
         nav.innerHTML = `
-          <button class="nav-btn active" type="button" data-tab="tab-overview">Overview</button>
-          <button class="nav-btn" type="button" data-tab="tab-vehicles">Vehicles</button>
-          <button class="nav-btn" type="button" data-tab="tab-shipments">Shipments</button>
-          <button class="nav-btn" type="button" data-tab="tab-drivers">Drivers</button>
-          <button class="nav-btn" type="button" data-tab="tab-driver-monitor">Driver Monitor</button>
+          <button class="nav-btn active" type="button" data-tab="tab-overview">Dashboard Overview</button>
+          <button class="nav-btn" type="button" data-tab="tab-vehicles">Fleet Vehicles</button>
+          <button class="nav-btn" type="button" data-tab="tab-shipments">Logistics & Shipments</button>
+          <button class="nav-btn" type="button" data-tab="tab-drivers">Driver Registry</button>
+          <button class="nav-btn" type="button" data-tab="tab-driver-monitor">Live Driver Monitor</button>
         `;
       } else {
         nav.innerHTML = `
@@ -856,7 +1041,7 @@
         const popup = `
           <div class="map-popup">
             <strong>${escapeHtml(vehicle.plate)}</strong><br />
-            ${escapeHtml(vehicle.status.replaceAll("_", " "))}<br />
+            <span style="color:var(--text-muted);">${escapeHtml(vehicle.status.replaceAll("_", " "))}</span><br />
             Driver: ${escapeHtml(vehicle.driver?.name || "Unassigned")}<br />
             ${vehicle.driver?.phone ? `<a href="${telHref(vehicle.driver.phone)}">${escapeHtml(vehicle.driver.phone)}</a>` : ""}
           </div>
@@ -875,7 +1060,7 @@
 
       if (points.length) state.fleetMap.fitPoints(points);
 
-      $("#mapTimestamp").textContent = `Updated ${new Date().toLocaleTimeString()}`;
+      $("#mapTimestamp").textContent = `Live update • ${new Date().toLocaleTimeString()}`;
     }
 
     function renderDelayPanel() {
@@ -883,7 +1068,7 @@
       const panel = $("#delayPanel");
 
       if (!delayed.length) {
-        panel.innerHTML = `<div class="success-box">No delayed vehicles or shipments right now.</div>`;
+        panel.innerHTML = `<div class="success-box">✅ All logistics running on schedule.</div>`;
         return;
       }
 
@@ -899,10 +1084,10 @@
         return `
           <div class="alert-card">
             <div>
-              <strong>${escapeHtml(shipment.code)}</strong>
+              <strong style="font-size:16px;">${escapeHtml(shipment.code)}</strong>
               • ${escapeHtml(shipment.vehicle?.plate || "Unassigned")}
 
-              <div class="muted small">
+              <div class="muted small" style="margin-top:6px;">
                 ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
                 • ETA ${fmtDateTime(shipment.eta)}
               </div>
@@ -912,7 +1097,7 @@
                 ${shipment.driver?.phone ? `• <a href="${telHref(shipment.driver.phone)}">${escapeHtml(shipment.driver.phone)}</a>` : ""}
               </div>
 
-              <div class="muted small">Reason: ${escapeHtml(shipment.delayReason || "ETA passed")}</div>
+              <div class="bad small" style="margin-top:6px;">Reason: ${escapeHtml(shipment.delayReason || "ETA passed")}</div>
             </div>
 
             <div class="row">
@@ -921,7 +1106,7 @@
                   <select id="reassign-${shipment.id}">${options}</select>
                   <button class="btn warn" type="button" data-reassign="${shipment.id}">Assign replacement</button>
                 `
-                : `<span class="muted">No available vehicle. Add a vehicle first.</span>`}
+                : `<span class="muted small">No available vehicle. Add a vehicle first.</span>`}
             </div>
           </div>
         `;
@@ -942,7 +1127,7 @@
 
     function shipmentTableHtml(shipments) {
       if (!shipments.length) {
-        return `<div class="muted" style="padding:14px;">No shipments found.</div>`;
+        return `<div class="muted" style="padding:24px; text-align:center;">No shipments found matching criteria.</div>`;
       }
 
       return `
@@ -956,10 +1141,10 @@
               <th>Weight</th>
               <th>Status</th>
               <th>Vehicle</th>
-              <th>Manager status</th>
+              <th>Manager Check</th>
               <th>ETA</th>
               <th>Driver</th>
-              <th>AI Analyst</th>
+              <th>AI Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -986,14 +1171,14 @@
                   <td><strong>${escapeHtml(shipment.code)}</strong></td>
                   <td>
                     ${escapeHtml(shipment.origin.label)}
-                    <div class="muted small">→ ${escapeHtml(shipment.destination.label)}</div>
+                    <div class="muted small" style="margin-top:4px;">→ ${escapeHtml(shipment.destination.label)}</div>
                   </td>
                   <td>${escapeHtml(shipment.goodsDescription || "General cargo")}</td>
                   <td>${priorityBadge(shipment.priority)}</td>
                   <td>${escapeHtml(shipment.weightKg)} kg</td>
                   <td>
                     ${badge(shipment.status)}
-                    ${shipment.delayReason ? `<div class="muted small">${escapeHtml(shipment.delayReason)}</div>` : ""}
+                    ${shipment.delayReason ? `<div class="bad small" style="margin-top:4px;">${escapeHtml(shipment.delayReason)}</div>` : ""}
                   </td>
                   <td>
                     <select data-shipment-vehicle="${shipment.id}">${vehicleOptions}</select>
@@ -1001,16 +1186,18 @@
                   <td>
                     <select data-shipment-status="${shipment.id}">${statusOptions}</select>
                   </td>
-                  <td>${fmtDateTime(shipment.eta)}</td>
+                  <td><span class="small" style="white-space:nowrap;">${fmtDateTime(shipment.eta)}</span></td>
                   <td>
-                    ${shipment.driver
-                      ? `${escapeHtml(shipment.driver.name)}<br />
-                         <a href="${telHref(shipment.driver.phone)}">${escapeHtml(shipment.driver.phone || "")}</a>`
-                      : "-"}
+                    <div class="small">
+                      ${shipment.driver
+                        ? `<strong>${escapeHtml(shipment.driver.name)}</strong><br />
+                           <a href="${telHref(shipment.driver.phone)}">${escapeHtml(shipment.driver.phone || "")}</a>`
+                        : `<span class="muted">-</span>`}
+                    </div>
                   </td>
                   <td>
-                    <button class="btn primary small" type="button" data-ai-assign="${shipment.id}">
-                      AI Recommend Optimal Vehicle
+                    <button class="btn info small" type="button" data-ai-assign="${shipment.id}">
+                      AI Optimize
                     </button>
                   </td>
                 </tr>
@@ -1030,16 +1217,16 @@
               <th>Type</th>
               <th>Capacity</th>
               <th>Status</th>
-              <th>Driver</th>
-              <th>Location</th>
-              <th>Updated</th>
+              <th>Driver Assignment</th>
+              <th>Live Location</th>
+              <th>Last Updated</th>
             </tr>
           </thead>
           <tbody>
             ${state.manager.vehicles.map((vehicle) => `
               <tr>
                 <td><strong>${escapeHtml(vehicle.plate)}</strong></td>
-                <td>${escapeHtml(vehicle.type)}</td>
+                <td><span style="text-transform: capitalize;">${escapeHtml(vehicle.type)}</span></td>
                 <td>${escapeHtml(vehicle.capacityKg)} kg</td>
                 <td>
                   <select data-vehicle-status="${vehicle.id}">
@@ -1053,11 +1240,13 @@
                   </select>
                 </td>
                 <td>
+                  <span class="muted small">
                   ${vehicle.location
-                    ? `${Number(vehicle.location.lat).toFixed(3)}, ${Number(vehicle.location.lng).toFixed(3)}`
-                    : "-"}
+                    ? `${Number(vehicle.location.lat).toFixed(4)}, ${Number(vehicle.location.lng).toFixed(4)}`
+                    : "No Data"}
+                  </span>
                 </td>
-                <td>${fmtDateTime(vehicle.updatedAt)}</td>
+                <td><span class="muted small">${fmtDateTime(vehicle.updatedAt)}</span></td>
               </tr>
             `).join("")}
           </tbody>
@@ -1090,11 +1279,11 @@
         <table>
           <thead>
             <tr>
-              <th>Name</th>
+              <th>Driver Name</th>
               <th>Phone</th>
               <th>Username</th>
-              <th>Assigned vehicle</th>
-              <th>Contact</th>
+              <th>Assigned Vehicle</th>
+              <th>Quick Contact</th>
             </tr>
           </thead>
           <tbody>
@@ -1102,10 +1291,10 @@
               <tr>
                 <td><strong>${escapeHtml(driver.name)}</strong></td>
                 <td>${escapeHtml(driver.phone || "-")}</td>
-                <td>${escapeHtml(driver.username)}</td>
+                <td><span class="muted">${escapeHtml(driver.username)}</span></td>
                 <td>${escapeHtml(driver.assignedVehicle || "Unassigned")}</td>
                 <td>
-                  <a class="btn ghost small" href="${telHref(driver.phone)}">Call</a>
+                  <a class="btn primary small" href="${telHref(driver.phone)}">Call Now</a>
                 </td>
               </tr>
             `).join("")}
@@ -1119,12 +1308,12 @@
         <option value="${driver.id}">${escapeHtml(driver.name)}</option>
       `).join("");
 
-      openModal("Add vehicle", `
+      openModal("Add new vehicle to fleet", `
         <form id="vehicleForm">
           <div class="form-grid">
-            <label>Plate *<input id="vPlate" required placeholder="DL-01-AB-1234" /></label>
+            <label>License Plate *<input id="vPlate" required placeholder="DL-01-AB-1234" /></label>
 
-            <label>Type
+            <label>Vehicle Type
               <select id="vType">
                 <option>truck</option>
                 <option>van</option>
@@ -1133,9 +1322,9 @@
               </select>
             </label>
 
-            <label>Capacity kg<input id="vCapacity" type="number" min="0" value="1000" /></label>
+            <label>Capacity (kg)<input id="vCapacity" type="number" min="0" value="1000" /></label>
 
-            <label>Status
+            <label>Initial Status
               <select id="vStatus">
                 ${VEHICLE_STATUS_LIST.map((status) => `
                   <option value="${status}">${status.replaceAll("_", " ")}</option>
@@ -1143,20 +1332,20 @@
               </select>
             </label>
 
-            <label>Driver
+            <label>Assign Driver
               <select id="vDriver">
-                <option value="">Unassigned</option>
+                <option value="">Leave Unassigned</option>
                 ${driverOpts}
               </select>
             </label>
 
-            <label>Fuel consumption L/100km<input id="vFuel" type="number" step="0.1" value="16" /></label>
-            <label>Latitude<input id="vLat" type="number" step="any" placeholder="20.5937" /></label>
-            <label>Longitude<input id="vLng" type="number" step="any" placeholder="78.9629" /></label>
+            <label>Fuel Consumption (L/100km)<input id="vFuel" type="number" step="0.1" value="16" /></label>
+            <label>Base Latitude<input id="vLat" type="number" step="any" placeholder="20.5937" /></label>
+            <label>Base Longitude<input id="vLng" type="number" step="any" placeholder="78.9629" /></label>
           </div>
 
-          <div class="row" style="margin-top:14px;">
-            <button class="btn primary" type="submit">Save vehicle</button>
+          <div class="row" style="margin-top:24px;">
+            <button class="btn primary block" type="submit">Save Fleet Vehicle</button>
           </div>
         </form>
       `);
@@ -1183,7 +1372,7 @@
 
           await api("/vehicles", { method: "POST", body });
 
-          toast("Vehicle added", "success");
+          toast("Vehicle added successfully", "success");
           closeModal();
 
           await loadManager();
@@ -1194,17 +1383,17 @@
     }
 
     function openDriverModal() {
-      openModal("Add driver", `
+      openModal("Add new driver", `
         <form id="driverForm">
           <div class="form-grid">
-            <label>Name *<input id="dName" required placeholder="Driver name" /></label>
-            <label>Phone<input id="dPhone" placeholder="+91 98100 00000" /></label>
-            <label>Username *<input id="dUsername" required placeholder="driver@fleet.com" /></label>
-            <label>Password *<input id="dPassword" type="password" required minlength="6" /></label>
+            <label>Full Name *<input id="dName" required placeholder="John Doe" /></label>
+            <label>Phone Number<input id="dPhone" placeholder="+91 98100 00000" /></label>
+            <label>Login Username *<input id="dUsername" required placeholder="driver@fleet.com" /></label>
+            <label>Login Password *<input id="dPassword" type="password" required minlength="6" /></label>
           </div>
 
-          <div class="row" style="margin-top:14px;">
-            <button class="btn primary" type="submit">Save driver</button>
+          <div class="row" style="margin-top:24px;">
+            <button class="btn primary block" type="submit">Save Driver Profile</button>
           </div>
         </form>
       `);
@@ -1223,7 +1412,7 @@
             }
           });
 
-          toast("Driver added", "success");
+          toast("Driver added successfully", "success");
           closeModal();
 
           await loadManager();
@@ -1239,41 +1428,41 @@
         .map((v) => `<option value="${v.id}">${escapeHtml(v.plate)}</option>`)
         .join("");
 
-      openModal("New shipment", `
+      openModal("Create new logistics shipment", `
         <form id="shipmentForm">
           <div class="form-grid">
-            <label>Origin label<input id="sOriginLabel" value="Warehouse A" required /></label>
-            <label>Destination label<input id="sDestLabel" value="Customer Hub" required /></label>
+            <label>Origin Label<input id="sOriginLabel" value="Warehouse A" required /></label>
+            <label>Destination Label<input id="sDestLabel" value="Customer Hub" required /></label>
 
-            <label>Origin latitude<input id="sOriginLat" type="number" step="any" value="19.0760" /></label>
-            <label>Destination latitude<input id="sDestLat" type="number" step="any" value="28.6139" /></label>
+            <label>Origin Latitude<input id="sOriginLat" type="number" step="any" value="19.0760" /></label>
+            <label>Destination Latitude<input id="sDestLat" type="number" step="any" value="28.6139" /></label>
 
-            <label>Origin longitude<input id="sOriginLng" type="number" step="any" value="72.8777" /></label>
-            <label>Destination longitude<input id="sDestLng" type="number" step="any" value="77.2090" /></label>
+            <label>Origin Longitude<input id="sOriginLng" type="number" step="any" value="72.8777" /></label>
+            <label>Destination Longitude<input id="sDestLng" type="number" step="any" value="77.2090" /></label>
 
-            <label>Weight kg<input id="sWeight" type="number" min="0" value="500" /></label>
-            <label>ETA minutes<input id="sEta" type="number" min="5" value="90" /></label>
+            <label>Cargo Weight (kg)<input id="sWeight" type="number" min="0" value="500" /></label>
+            <label>ETA Allocation (minutes)<input id="sEta" type="number" min="5" value="90" /></label>
 
-            <label>Cargo goods description<input id="sGoods" value="General cargo" /></label>
+            <label>Goods Description<input id="sGoods" value="General cargo" /></label>
 
-            <label>Priority
+            <label>Priority Level
               <select id="sPriority">
-                <option value="regular">regular</option>
-                <option value="urgent">urgent</option>
-                <option value="delayed">delayed</option>
+                <option value="regular">Regular</option>
+                <option value="urgent">Urgent</option>
+                <option value="delayed">Delayed</option>
               </select>
             </label>
 
-            <label>Assign vehicle
+            <label>Pre-assign Vehicle
               <select id="sVehicle">
-                <option value="">Unassigned</option>
+                <option value="">Leave unassigned for AI</option>
                 ${vehicleOptions}
               </select>
             </label>
           </div>
 
-          <div class="row" style="margin-top:14px;">
-            <button class="btn primary" type="submit">Save shipment</button>
+          <div class="row" style="margin-top:24px;">
+            <button class="btn primary block" type="submit">Create Shipment</button>
           </div>
         </form>
       `);
@@ -1299,7 +1488,7 @@
             }
           });
 
-          toast("Shipment created", "success");
+          toast("Shipment securely registered", "success");
           closeModal();
 
           await loadManager();
@@ -1310,14 +1499,14 @@
     }
 
     function openDelayModal(shipmentId) {
-      openModal("Report delay", `
+      openModal("Report Trip Delay", `
         <form id="delayForm">
-          <label>Delay reason
-            <textarea id="delayNote" rows="4" placeholder="Traffic, weather, breakdown, road closure..."></textarea>
+          <label>Explain Delay Reason
+            <textarea id="delayNote" rows="4" placeholder="e.g., Heavy traffic, bad weather, breakdown, road block..."></textarea>
           </label>
 
-          <div class="row" style="margin-top:12px;">
-            <button class="btn danger" type="submit">Submit delay</button>
+          <div class="row" style="margin-top:20px;">
+            <button class="btn danger block" type="submit">Submit Delay Alert</button>
           </div>
         </form>
       `);
@@ -1334,7 +1523,7 @@
             }
           });
 
-          toast("Delay reported to manager", "success");
+          toast("Manager alerted about delay", "success");
           closeModal();
 
           await loadDriver();
@@ -1352,21 +1541,21 @@
 
         openModal("AI Recommended Optimal Vehicle", `
           <div class="recommended-box">
-            <strong>${escapeHtml(recommendation.vehicle.plate)}</strong>
+            <strong style="font-size: 18px;">${escapeHtml(recommendation.vehicle.plate)}</strong>
 
-            <div class="muted small" style="margin-top:6px;">
+            <div class="muted small" style="margin-top:8px;">
               ${escapeHtml(recommendation.vehicle.type)} •
-              ${escapeHtml(recommendation.vehicle.capacityKg)} kg capacity •
-              ${escapeHtml(recommendation.vehicle.status.replaceAll("_", " "))}
+              ${escapeHtml(recommendation.vehicle.capacityKg)} kg total capacity •
+              <span style="text-transform:capitalize;">${escapeHtml(recommendation.vehicle.status.replaceAll("_", " "))}</span>
             </div>
           </div>
 
           <table class="mini-table">
             <tbody>
               <tr>
-                <td class="muted">Recommended driver</td>
+                <td class="muted">Recommended Driver</td>
                 <td>
-                  ${escapeHtml(recommendation.driver?.name || "No driver")}
+                  <strong>${escapeHtml(recommendation.driver?.name || "No assigned driver")}</strong>
                   ${
                     recommendation.driver?.phone
                       ? `<br /><a href="${telHref(recommendation.driver.phone)}">${escapeHtml(recommendation.driver.phone)}</a>`
@@ -1376,30 +1565,30 @@
               </tr>
 
               <tr>
-                <td class="muted">Distance from origin</td>
-                <td>${escapeHtml(recommendation.distanceKm)} km</td>
+                <td class="muted">Proximity to Origin</td>
+                <td><strong>${escapeHtml(recommendation.distanceKm)} km</strong></td>
               </tr>
 
               <tr>
-                <td class="muted">Capacity utilization</td>
-                <td>${escapeHtml(recommendation.utilizationPercent)}%</td>
+                <td class="muted">Capacity Utilization</td>
+                <td><strong>${escapeHtml(recommendation.utilizationPercent)}%</strong></td>
               </tr>
 
               <tr>
-                <td class="muted">AI score</td>
-                <td>${escapeHtml(recommendation.score)}</td>
+                <td class="muted">AI Optimization Score</td>
+                <td><span class="badge info">${escapeHtml(recommendation.score)} / 100</span></td>
               </tr>
 
               <tr>
-                <td class="muted">Explanation</td>
-                <td>${escapeHtml(recommendation.reason)}</td>
+                <td class="muted">AI Reasoning</td>
+                <td class="small" style="line-height:1.5;">${escapeHtml(recommendation.reason)}</td>
               </tr>
             </tbody>
           </table>
 
-          <div class="row" style="margin-top:14px;">
-            <button class="btn primary" type="button" data-confirm-ai="${escapeHtml(shipmentId)}">
-              Confirm AI assignment
+          <div class="row" style="margin-top:24px;">
+            <button class="btn primary block" type="button" data-confirm-ai="${escapeHtml(shipmentId)}">
+              Confirm & Assign
             </button>
           </div>
         `);
@@ -1421,37 +1610,37 @@
       const data = state.driver;
 
       $("#driverProfileCard").innerHTML = `
-        <div class="card-head"><h3>My profile</h3></div>
+        <div class="card-head"><h3>My Profile</h3></div>
 
-        <p style="margin:8px 0;"><strong>${escapeHtml(data.user.name)}</strong></p>
+        <p style="margin:8px 0; font-size:18px;"><strong>${escapeHtml(data.user.name)}</strong></p>
 
         <p class="muted" style="margin:8px 0;">
-          ${escapeHtml(data.user.username)} • ${escapeHtml(data.user.phone || "No phone")}
+          ${escapeHtml(data.user.username)} • ${escapeHtml(data.user.phone || "No phone linked")}
         </p>
 
-        <p style="margin:8px 0;">
-          Vehicle:
-          <strong>${escapeHtml(data.vehicle?.plate || "Not assigned")}</strong>
-          (${escapeHtml((data.vehicle?.status || "none").replaceAll("_", " "))})
-        </p>
+        <div style="margin-top:16px; padding: 12px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--line);">
+          <span class="muted small">Active Vehicle</span><br/>
+          <strong style="font-size:16px;">${escapeHtml(data.vehicle?.plate || "Not assigned")}</strong>
+          <span class="muted small">(${escapeHtml((data.vehicle?.status || "none").replaceAll("_", " "))})</span>
+        </div>
       `;
 
       const manager = data.managerContact || state.managerContact;
 
       $("#managerContactCard").innerHTML = `
-        <div class="card-head"><h3>Manager contact</h3></div>
+        <div class="card-head"><h3>Manager Contact</h3></div>
 
-        <p style="margin:8px 0;"><strong>${escapeHtml(manager?.name || "Fleet Manager")}</strong></p>
+        <p style="margin:8px 0; font-size:16px;"><strong>${escapeHtml(manager?.name || "Fleet Manager")}</strong></p>
 
-        <p class="muted" style="margin:8px 0;">${escapeHtml(manager?.phone || "No phone")}</p>
+        <p class="muted" style="margin:8px 0 16px 0;">${escapeHtml(manager?.phone || "No phone linked")}</p>
 
         <div class="row">
-          <a class="btn" href="${telHref(manager?.phone)}">Call manager</a>
-          <button class="btn ghost" id="copyManagerPhone" type="button">Copy number</button>
+          <a class="btn primary block" href="${telHref(manager?.phone)}">Call Manager HQ</a>
+          <button class="btn ghost block" id="copyManagerPhone" type="button">Copy Number</button>
         </div>
 
-        <p class="muted small" style="margin-bottom:0;">
-          Use this contact for accidents, breakdowns, road closures, or delay escalation.
+        <p class="muted small" style="margin-top:16px; line-height:1.5;">
+          Use this contact for accidents, sudden breakdowns, severe road closures, or required delay escalation.
         </p>
       `;
 
@@ -1468,7 +1657,7 @@
       const el = $("#driverShipments");
 
       if (!active.length && !history.length) {
-        el.innerHTML = `<div class="muted">No shipments assigned.</div>`;
+        el.innerHTML = `<div class="muted" style="padding:16px;">No shipments currently assigned to you.</div>`;
         return;
       }
 
@@ -1476,48 +1665,50 @@
         <div class="shipment-card ${shipment.delayed ? "delayed" : ""}">
           <div class="row spread">
             <div>
-              <strong>${escapeHtml(shipment.code)}</strong>
+              <strong style="font-size:18px;">${escapeHtml(shipment.code)}</strong>
 
-              <div class="muted small">
-                ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
+              <div class="muted small" style="margin:8px 0;">
+                ${escapeHtml(shipment.origin.label)} <span style="margin:0 4px;">→</span> ${escapeHtml(shipment.destination.label)}
               </div>
 
-              <div class="muted small">
-                Weight ${escapeHtml(shipment.weightKg)} kg • ETA ${fmtDateTime(shipment.eta)} • ${badge(shipment.status)}
+              <div class="row small" style="margin-bottom:8px;">
+                <span class="badge ghost">Weight: ${escapeHtml(shipment.weightKg)} kg</span>
+                <span class="badge ghost">ETA: ${fmtDateTime(shipment.eta)}</span>
+                ${badge(shipment.status)}
               </div>
 
               <div class="muted small">
                 Cargo: ${escapeHtml(shipment.goodsDescription || "General cargo")}
               </div>
 
-              <div class="muted small">
+              <div class="muted small" style="margin-top:4px;">
                 Priority: ${priorityBadge(shipment.priority)}
               </div>
 
-              ${shipment.delayReason ? `<div class="error-text small">Delay: ${escapeHtml(shipment.delayReason)}</div>` : ""}
+              ${shipment.delayReason ? `<div class="error-text small" style="margin-top:8px;">Delay Logged: ${escapeHtml(shipment.delayReason)}</div>` : ""}
             </div>
 
-            <div class="row">
-              <button class="btn" type="button" data-driver-action="in_transit" data-shipment="${shipment.id}">Depart</button>
-              <button class="btn" type="button" data-driver-action="arrived" data-shipment="${shipment.id}">Arrived</button>
-              <button class="btn success" type="button" data-driver-action="delivered" data-shipment="${shipment.id}">Delivered</button>
-              <button class="btn danger" type="button" data-driver-action="delayed" data-shipment="${shipment.id}">Report delay</button>
+            <div class="row" style="flex-direction:column; align-items:flex-end;">
+              <button class="btn block" type="button" data-driver-action="in_transit" data-shipment="${shipment.id}">Mark Departed</button>
+              <button class="btn block" type="button" data-driver-action="arrived" data-shipment="${shipment.id}">Mark Arrived</button>
+              <button class="btn success block" type="button" data-driver-action="delivered" data-shipment="${shipment.id}">Mark Delivered</button>
+              <button class="btn danger block" type="button" data-driver-action="delayed" data-shipment="${shipment.id}">Report Issue/Delay</button>
             </div>
           </div>
         </div>
       `).join("");
 
       const historyHtml = history.length
-        ? `<h4 class="muted">History</h4>` + history.slice(0, 5).map((shipment) => `
-          <div class="shipment-card">
-            <strong>${escapeHtml(shipment.code)}</strong>
+        ? `<h4 class="muted" style="margin-top:24px;">Shipment History</h4>` + history.slice(0, 5).map((shipment) => `
+          <div class="shipment-card" style="padding:16px;">
+            <strong style="font-size:15px;">${escapeHtml(shipment.code)}</strong>
 
-            <div class="muted small">
+            <div class="muted small" style="margin-top:4px;">
               ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
             </div>
 
-            <div class="muted small">
-              ${badge(shipment.status)} • Delivered ${fmtDateTime(shipment.deliveredAt)}
+            <div class="row small" style="margin-top:8px;">
+              ${badge(shipment.status)} <span class="muted">Delivered ${fmtDateTime(shipment.deliveredAt)}</span>
             </div>
           </div>
         `).join("")
@@ -1528,7 +1719,7 @@
 
     async function updateGps() {
       if (!navigator.geolocation) {
-        toast("Geolocation is not supported by this browser.", "error");
+        toast("Geolocation is not supported by your browser/device.", "error");
         return;
       }
 
@@ -1543,7 +1734,7 @@
               }
             });
 
-            toast("GPS location updated", "success");
+            toast("GPS coordinates updated", "success");
 
             await loadDriver();
             await loadDriverTrip();
@@ -1552,7 +1743,7 @@
           }
         },
         () => {
-          toast("Unable to access GPS. Grant location permission.", "error");
+          toast("Unable to access GPS. Please allow location permissions.", "warn");
         }
       );
     }
@@ -1562,7 +1753,7 @@
       if (!intel) return;
 
       try {
-        intel.innerHTML = `<div class="muted">Loading live trip intelligence...</div>`;
+        intel.innerHTML = `<div class="muted">Loading AI live trip intelligence...</div>`;
 
         const data = await api("/driver/trip-intelligence");
         state.driverTripData = data;
@@ -1584,15 +1775,15 @@
       if (!intel) return;
 
       if (!data.hasTrip) {
-        intel.innerHTML = `<div class="muted">No active trip assigned.</div>`;
+        intel.innerHTML = `<div class="muted" style="padding:16px;">No active trip currently assigned.</div>`;
         return;
       }
 
       const trip = data.trip;
       const weather = trip.weather || {};
 
-      const currentWeather = weather.current || { level: "unknown", summary: "No weather data" };
-      const destinationWeather = weather.destination || { level: "unknown", summary: "No weather data" };
+      const currentWeather = weather.current || { level: "unknown", summary: "No live data" };
+      const destinationWeather = weather.destination || { level: "unknown", summary: "No live data" };
 
       const weatherTone = (level) =>
         level === "severe"
@@ -1604,37 +1795,37 @@
               : "info";
 
       const rows = [
-        ["Current location", formatLocation(trip.currentLocation)],
-        ["Starting point", formatPoint(trip.startingPoint)],
+        ["Current Location", formatLocation(trip.currentLocation)],
+        ["Starting Origin", formatPoint(trip.startingPoint)],
         [
-          "Intermediate stops",
+          "Required Stops",
           trip.intermediateStops?.length
             ? trip.intermediateStops.map(formatPoint).join("<br />")
-            : "None"
+            : "None required"
         ],
-        ["Ending point", formatPoint(trip.endingPoint)],
-        ["Distance", `${escapeHtml(trip.distanceKm)} km`],
-        ["Traffic status", trafficBadge(trip.traffic?.status)],
-        ["Traffic note", escapeHtml(trip.traffic?.note || "-")],
-        ["ETA", `${escapeHtml(trip.etaMinutes)} minutes`],
-        ["Expected arrival", fmtDateTime(trip.expectedArrival)],
+        ["Final Destination", formatPoint(trip.endingPoint)],
+        ["Route Distance", `<strong>${escapeHtml(trip.distanceKm)} km</strong>`],
+        ["Live Traffic", trafficBadge(trip.traffic?.status)],
+        ["Traffic Notice", escapeHtml(trip.traffic?.note || "All clear")],
+        ["Est. Time Remaining", `<strong>${escapeHtml(trip.etaMinutes)} mins</strong>`],
+        ["Expected Arrival", fmtDateTime(trip.expectedArrival)],
         [
-          "Fuel consumption",
-          `${escapeHtml(trip.fuel?.rateLPer100Km)} L/100 km • Estimated ${escapeHtml(trip.fuel?.estimatedLiters)} L`
+          "Fuel Metrics",
+          `${escapeHtml(trip.fuel?.rateLPer100Km)} L/100km • Needs ~${escapeHtml(trip.fuel?.estimatedLiters)} L`
         ],
-        ["Total cargo weight", `${escapeHtml(trip.totalWeightKg)} kg`],
-        ["Cargo goods description", escapeHtml(trip.goodsDescription || "General cargo")],
-        ["Priority", priorityBadge(trip.priority)]
+        ["Total Weight", `${escapeHtml(trip.totalWeightKg)} kg`],
+        ["Cargo Details", escapeHtml(trip.goodsDescription || "General")],
+        ["Delivery Priority", priorityBadge(trip.priority)]
       ];
 
       intel.innerHTML = `
-        <div class="row">
+        <div class="row" style="margin-bottom:16px;">
           <span class="weather-badge ${weatherTone(currentWeather.level)}">
-            Live weather: ${escapeHtml(currentWeather.summary)}
+            Live Area: ${escapeHtml(currentWeather.summary)}
           </span>
 
           <span class="weather-badge ${weatherTone(destinationWeather.level)}">
-            Destination weather: ${escapeHtml(destinationWeather.summary)}
+            Target Area: ${escapeHtml(destinationWeather.summary)}
           </span>
         </div>
 
@@ -1644,7 +1835,7 @@
               .map(
                 ([label, value]) => `
                   <tr>
-                    <td class="muted">${escapeHtml(label)}</td>
+                    <td class="muted" style="width: 30%;">${escapeHtml(label)}</td>
                     <td>${value}</td>
                   </tr>
                 `
@@ -1672,9 +1863,9 @@
         state.tripMap.addMarker({
           lat: trip.currentLocation.lat,
           lng: trip.currentLocation.lng,
-          color: "#a78bfa",
+          color: "#8B5CF6", // Purple for current
           title: "Current location",
-          popup: `<div class="map-popup">Current location</div>`
+          popup: `<div class="map-popup">Your Current Location</div>`
         });
 
         points.push(trip.currentLocation);
@@ -1684,9 +1875,9 @@
         state.tripMap.addMarker({
           lat: trip.startingPoint.lat,
           lng: trip.startingPoint.lng,
-          color: "#22c55e",
+          color: "#10B981", // Green for start
           title: "Starting point",
-          popup: `<div class="map-popup">Starting point: ${escapeHtml(trip.startingPoint.label || "")}</div>`
+          popup: `<div class="map-popup">Start: ${escapeHtml(trip.startingPoint.label || "")}</div>`
         });
 
         points.push(trip.startingPoint);
@@ -1696,9 +1887,9 @@
         state.tripMap.addMarker({
           lat: stop.lat,
           lng: stop.lng,
-          color: "#f59e0b",
+          color: "#F59E0B", // Amber for stops
           title: stop.label || `Stop ${index + 1}`,
-          popup: `<div class="map-popup">Intermediate stop: ${escapeHtml(stop.label || "")}</div>`
+          popup: `<div class="map-popup">Stop: ${escapeHtml(stop.label || "")}</div>`
         });
 
         points.push(stop);
@@ -1708,7 +1899,7 @@
         state.tripMap.addMarker({
           lat: trip.endingPoint.lat,
           lng: trip.endingPoint.lng,
-          color: "#ef4444",
+          color: "#EF4444", // Red for end
           title: "Destination",
           popup: `<div class="map-popup">Destination: ${escapeHtml(trip.endingPoint.label || "")}</div>`
         });
@@ -1721,17 +1912,17 @@
         const alternate = routeData.options.find((option) => option.id !== routeData.recommendedId);
 
         if (alternate) {
-          state.tripMap.drawPath(alternate.path, "#94a3c4", true);
+          state.tripMap.drawPath(alternate.path, "#475569", true); // Slate grey dashed
         }
 
         if (recommended) {
           state.tripMap.drawPath(
             recommended.path,
-            routeData.recommendedId === "alternate" ? "#f59e0b" : "#2f81f7"
+            routeData.recommendedId === "alternate" ? "#F59E0B" : "#3B82F6"
           );
         }
       } else if (trip.path?.length) {
-        state.tripMap.drawPath(trip.path, "#38bdf8");
+        state.tripMap.drawPath(trip.path, "#0EA5E9");
       }
 
       if (points.length) {
@@ -1753,7 +1944,7 @@
       }
 
       try {
-        recommendationEl.innerHTML = `<div class="muted">Analyzing AI route and weather...</div>`;
+        recommendationEl.innerHTML = `<div class="muted">AI analyzing routes and weather patterns...</div>`;
 
         const params = new URLSearchParams({
           originLat: tripData.trip.startingPoint.lat,
@@ -1767,36 +1958,36 @@
 
         recommendationEl.innerHTML = `
           <div class="recommended-box">
-            <strong>Recommended: ${escapeHtml(recommended.name)}</strong>
+            <strong style="font-size:16px;">AI Recommended: ${escapeHtml(recommended.name)}</strong>
 
-            <div class="muted small" style="margin-top:6px;">
+            <div class="muted small" style="margin-top:8px;">
               ${escapeHtml(routeData.recommendationReason)}
             </div>
 
-            <div class="row small" style="margin-top:8px;">
-              <span>Distance: ${escapeHtml(recommended.distanceKm)} km</span>
-              <span>ETA: ${escapeHtml(recommended.etaMinutes)} min</span>
-              <span>Risk: ${escapeHtml(recommended.riskScore)}/100 (${escapeHtml(recommended.riskLevel)})</span>
+            <div class="row small" style="margin-top:12px;">
+              <span class="badge info">Distance: ${escapeHtml(recommended.distanceKm)} km</span>
+              <span class="badge info">ETA: ${escapeHtml(recommended.etaMinutes)} min</span>
+              <span class="badge info">Risk: ${escapeHtml(recommended.riskScore)}/100 (${escapeHtml(recommended.riskLevel)})</span>
             </div>
           </div>
 
           <table class="mini-table">
             <thead>
               <tr>
-                <th>Route</th>
+                <th>Route Path</th>
                 <th>Distance</th>
-                <th>ETA</th>
-                <th>Risk</th>
+                <th>Est. Time</th>
+                <th>Risk Score</th>
               </tr>
             </thead>
 
             <tbody>
               ${routeData.options.map((option) => `
                 <tr class="${option.id === routeData.recommendedId ? "selected-row" : ""}">
-                  <td>${escapeHtml(option.name)}</td>
+                  <td><strong>${escapeHtml(option.name)}</strong></td>
                   <td>${escapeHtml(option.distanceKm)} km</td>
                   <td>${escapeHtml(option.etaMinutes)} min</td>
-                  <td>${escapeHtml(option.riskScore)} (${escapeHtml(option.riskLevel)})</td>
+                  <td>${escapeHtml(option.riskScore)} <span class="muted">(${escapeHtml(option.riskLevel)})</span></td>
                 </tr>
               `).join("")}
             </tbody>
@@ -1805,7 +1996,7 @@
 
         await renderTripMap(tripData.trip, routeData);
 
-        toast("AI route analysis complete", "success");
+        toast("AI route analysis successfully completed", "success");
       } catch (error) {
         recommendationEl.innerHTML = `<div class="error-text">${escapeHtml(error.message)}</div>`;
         toast(error.message, "error");
@@ -1817,7 +2008,7 @@
       if (!summary) return;
 
       try {
-        summary.innerHTML = `<div class="muted">Loading driver monitor...</div>`;
+        summary.innerHTML = `<div class="muted">Loading live driver fleet monitor...</div>`;
 
         const data = await api("/manager/driver-monitor");
         state.monitorData = data.drivers || [];
@@ -1841,7 +2032,7 @@
 
       if (!state.monitorData.length) {
         select.innerHTML = "";
-        summary.innerHTML = `<div class="muted">No drivers found.</div>`;
+        summary.innerHTML = `<div class="muted">No driver data found in snapshot.</div>`;
         details.innerHTML = "";
 
         if (state.monitorMap) state.monitorMap.clear();
@@ -1853,7 +2044,7 @@
         .map(
           (item, index) => `
             <option value="${item.driver.id}" ${index === state.monitorIndex ? "selected" : ""}>
-              ${escapeHtml(item.driver.name)} ${item.hasTrip ? "• Active trip" : "• No active trip"}
+              ${escapeHtml(item.driver.name)} ${item.hasTrip ? "(On Trip)" : "(Idle)"}
             </option>
           `
         )
@@ -1864,20 +2055,20 @@
 
       if (!item.hasTrip) {
         summary.innerHTML = `
-          <div class="recommended-box">
-            <strong>${escapeHtml(item.driver.name)}</strong>
+          <div class="recommended-box" style="background: rgba(255,255,255,0.03); border-color:var(--line);">
+            <strong style="font-size:18px;">${escapeHtml(item.driver.name)}</strong>
 
-            <div class="muted small">${escapeHtml(item.driver.phone || "No phone")}</div>
+            <div class="muted small" style="margin-top:4px;">${escapeHtml(item.driver.phone || "No phone connected")}</div>
 
-            <div class="muted small" style="margin-top:8px;">
-              Vehicle: ${escapeHtml(item.vehicle?.plate || "Not assigned")}
+            <div class="muted small" style="margin-top:12px;">
+              Assigned Vehicle: <strong style="color:var(--text-main);">${escapeHtml(item.vehicle?.plate || "Not assigned")}</strong>
             </div>
 
-            <div class="muted small">
-              Last update: ${fmtDateTime(item.lastUpdate)}
+            <div class="muted small" style="margin-top:4px;">
+              Last Ping: ${fmtDateTime(item.lastUpdate)}
             </div>
 
-            <div class="muted small" style="margin-top:8px;">No active trip assigned.</div>
+            <div class="warn small" style="margin-top:12px;">Driver is currently idle (No active trip).</div>
           </div>
         `;
 
@@ -1892,47 +2083,46 @@
 
       summary.innerHTML = `
         <div class="recommended-box">
-          <strong>${escapeHtml(item.driver.name)}</strong>
-          • ${escapeHtml(item.driver.phone || "No phone")}
+          <strong style="font-size:18px;">${escapeHtml(item.driver.name)}</strong>
+          <span class="muted small" style="margin-left:8px;">${escapeHtml(item.driver.phone || "No phone")}</span>
 
-          <div class="muted small" style="margin-top:8px;">
-            Vehicle: ${escapeHtml(item.vehicle?.plate || "-")}
-            • Primary shipment: ${escapeHtml(item.primaryShipment?.code || "-")}
-            • Active shipments: ${escapeHtml(item.activeShipmentCount)}
+          <div class="muted small" style="margin-top:12px; line-height:1.6;">
+            Active Vehicle: <strong style="color:var(--text-main);">${escapeHtml(item.vehicle?.plate || "-")}</strong><br/>
+            Primary Manifest: <strong style="color:var(--text-main);">${escapeHtml(item.primaryShipment?.code || "-")}</strong><br/>
+            Batched Shipments: <strong style="color:var(--text-main);">${escapeHtml(item.activeShipmentCount)}</strong>
           </div>
 
-          <div class="row small" style="margin-top:8px;">
-            <span>Priority: ${priorityBadge(trip.priority)}</span>
-            <span>Traffic: ${trafficBadge(trip.traffic?.status)}</span>
-            <span>ETA: ${escapeHtml(trip.etaMinutes)} min</span>
-            <span>Fuel: ${escapeHtml(trip.fuel?.estimatedLiters)} L</span>
+          <div class="row small" style="margin-top:16px;">
+            <span class="badge ghost">Priority: ${priorityBadge(trip.priority)}</span>
+            <span class="badge ghost">Traffic: ${trafficBadge(trip.traffic?.status)}</span>
+            <span class="badge ghost">ETA: ${escapeHtml(trip.etaMinutes)} min</span>
           </div>
 
-          <div class="muted small" style="margin-top:8px;">
-            Last update: ${fmtDateTime(item.lastUpdate)}
+          <div class="muted small" style="margin-top:16px;">
+            Last GPS Ping: ${fmtDateTime(item.lastUpdate)}
           </div>
         </div>
       `;
 
       const rows = [
-        ["Current location", formatLocation(trip.currentLocation)],
-        ["Starting point", formatPoint(trip.startingPoint)],
+        ["Current Location", formatLocation(trip.currentLocation)],
+        ["Route Origin", formatPoint(trip.startingPoint)],
         [
-          "Intermediate stops",
+          "Intermediate Stops",
           trip.intermediateStops?.length
             ? trip.intermediateStops.map(formatPoint).join("<br />")
-            : "None"
+            : "Direct Route"
         ],
-        ["Ending point", formatPoint(trip.endingPoint)],
-        ["Distance", `${escapeHtml(trip.distanceKm)} km`],
-        ["ETA", `${escapeHtml(trip.etaMinutes)} minutes`],
-        ["Expected arrival", fmtDateTime(trip.expectedArrival)],
+        ["Final Destination", formatPoint(trip.endingPoint)],
+        ["Distance Remaining", `<strong>${escapeHtml(trip.distanceKm)} km</strong>`],
+        ["ETA", `<strong>${escapeHtml(trip.etaMinutes)} mins</strong>`],
+        ["Target Arrival", fmtDateTime(trip.expectedArrival)],
         [
-          "Fuel consumption",
-          `${escapeHtml(trip.fuel?.rateLPer100Km)} L/100 km • Estimated ${escapeHtml(trip.fuel?.estimatedLiters)} L`
+          "Fuel Diagnostics",
+          `${escapeHtml(trip.fuel?.rateLPer100Km)} L/100km • Target: ${escapeHtml(trip.fuel?.estimatedLiters)} L`
         ],
-        ["Total cargo weight", `${escapeHtml(trip.totalWeightKg)} kg`],
-        ["Cargo description", escapeHtml(trip.goodsDescription || "General cargo")]
+        ["Payload Weight", `${escapeHtml(trip.totalWeightKg)} kg`],
+        ["Payload Details", escapeHtml(trip.goodsDescription || "General cargo")]
       ];
 
       details.innerHTML = `
@@ -1942,7 +2132,7 @@
               .map(
                 ([label, value]) => `
                   <tr>
-                    <td class="muted">${escapeHtml(label)}</td>
+                    <td class="muted" style="width:30%;">${escapeHtml(label)}</td>
                     <td>${value}</td>
                   </tr>
                 `
@@ -1974,9 +2164,9 @@
           state.monitorMap.addMarker({
             lat: item.vehicle.location.lat,
             lng: item.vehicle.location.lng,
-            color: "#a78bfa",
+            color: "#8B5CF6", // Purple
             title: item.vehicle.plate,
-            popup: `<div class="map-popup">${escapeHtml(item.vehicle.plate)}<br />No active trip</div>`
+            popup: `<div class="map-popup"><strong>${escapeHtml(item.vehicle.plate)}</strong><br />Idle Location</div>`
           });
 
           points.push(item.vehicle.location);
@@ -1993,9 +2183,9 @@
         state.monitorMap.addMarker({
           lat: trip.currentLocation.lat,
           lng: trip.currentLocation.lng,
-          color: "#a78bfa",
-          title: "Current location",
-          popup: `<div class="map-popup">Current location</div>`
+          color: "#8B5CF6", // Purple
+          title: "Current Driver location",
+          popup: `<div class="map-popup">Live Location</div>`
         });
 
         points.push(trip.currentLocation);
@@ -2005,9 +2195,9 @@
         state.monitorMap.addMarker({
           lat: trip.startingPoint.lat,
           lng: trip.startingPoint.lng,
-          color: "#22c55e",
+          color: "#10B981", // Green
           title: "Starting point",
-          popup: `<div class="map-popup">Starting point: ${escapeHtml(trip.startingPoint.label || "")}</div>`
+          popup: `<div class="map-popup">Start: ${escapeHtml(trip.startingPoint.label || "")}</div>`
         });
 
         points.push(trip.startingPoint);
@@ -2017,9 +2207,9 @@
         state.monitorMap.addMarker({
           lat: stop.lat,
           lng: stop.lng,
-          color: "#f59e0b",
+          color: "#F59E0B", // Amber
           title: stop.label || `Stop ${index + 1}`,
-          popup: `<div class="map-popup">Intermediate stop: ${escapeHtml(stop.label || "")}</div>`
+          popup: `<div class="map-popup">Stop: ${escapeHtml(stop.label || "")}</div>`
         });
 
         points.push(stop);
@@ -2029,16 +2219,16 @@
         state.monitorMap.addMarker({
           lat: trip.endingPoint.lat,
           lng: trip.endingPoint.lng,
-          color: "#ef4444",
+          color: "#EF4444", // Red
           title: "Destination",
-          popup: `<div class="map-popup">Destination: ${escapeHtml(trip.endingPoint.label || "")}</div>`
+          popup: `<div class="map-popup">Dest: ${escapeHtml(trip.endingPoint.label || "")}</div>`
         });
 
         points.push(trip.endingPoint);
       }
 
       if (trip.path?.length) {
-        state.monitorMap.drawPath(trip.path, "#38bdf8");
+        state.monitorMap.drawPath(trip.path, "#0EA5E9");
       }
 
       if (points.length) {
@@ -2075,7 +2265,7 @@
         const select = document.getElementById(`reassign-${shipmentId}`);
 
         if (!select || !select.value) {
-          toast("Choose a replacement vehicle first.", "warn");
+          toast("Please choose a replacement vehicle first.", "warn");
           return;
         }
 
@@ -2086,11 +2276,11 @@
             method: "POST",
             body: {
               newVehicleId: select.value,
-              reason: "Manager delay resolution"
+              reason: "Manager delay resolution override"
             }
           });
 
-          toast("Replacement vehicle assigned.", "success");
+          toast("Replacement successfully assigned.", "success");
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
@@ -2118,7 +2308,7 @@
             body: { status }
           });
 
-          toast("Shipment updated", "success");
+          toast("Shipment status updated", "success");
 
           await loadDriver();
           await loadDriverTrip();
@@ -2147,7 +2337,7 @@
             method: "POST"
           });
 
-          toast("AI assignment completed", "success");
+          toast("AI vehicle assignment locked in", "success");
           closeModal();
 
           await loadManager();
@@ -2161,12 +2351,14 @@
 
       if (event.target.id === "refreshManagerBtn") {
         await loadManager();
+        toast("Dashboard refreshed", "info");
         return;
       }
 
       if (event.target.id === "refreshDriverBtn") {
         await loadDriver();
         await loadDriverTrip();
+        toast("Console refreshed", "info");
         return;
       }
 
@@ -2196,7 +2388,7 @@
             method: "POST"
           });
 
-          toast("Hourly snapshot captured", "success");
+          toast("Hourly snapshot captured & saved", "success");
           await loadDriverMonitor();
         } catch (error) {
           toast(error.message, "error");
@@ -2232,9 +2424,9 @@
         try {
           const manager = state.driver?.managerContact || state.managerContact;
           await navigator.clipboard.writeText(manager?.phone || "");
-          toast("Manager number copied", "success");
+          toast("HQ Manager number copied to clipboard", "success");
         } catch {
-          toast("Copy failed", "error");
+          toast("Copy to clipboard failed", "error");
         }
       }
     }
@@ -2249,7 +2441,7 @@
             body: { status: vehicleStatusEl.value }
           });
 
-          toast("Vehicle status updated", "success");
+          toast("Vehicle status correctly updated", "success");
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
@@ -2267,7 +2459,7 @@
             body: { driverId: vehicleDriverEl.value || null }
           });
 
-          toast("Driver assignment updated", "success");
+          toast("Driver reassignment successful", "success");
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
@@ -2285,7 +2477,7 @@
             body: { vehicleId: shipmentVehicleEl.value || null }
           });
 
-          toast("Shipment vehicle updated", "success");
+          toast("Shipment vehicle linkage updated", "success");
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
