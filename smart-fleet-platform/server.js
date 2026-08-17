@@ -85,7 +85,7 @@ async function seedDb() {
         role: "driver",
         username: "driver2@fleet.com",
         passwordHash: driverHash,
-        name: "Aisha Khan",
+        name: "Ammir Khan",
         phone: "+91 98100 00002"
       },
       {
