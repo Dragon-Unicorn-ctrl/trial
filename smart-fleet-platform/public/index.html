@@ -7,432 +7,98 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
-      --bg: #07111f;
-      --panel: #0d1830;
-      --card: #111e38;
-      --line: rgba(255, 255, 255, 0.09);
-      --text: #e8eefc;
-      --muted: #94a3c4;
-      --brand: #2f81f7;
-      --good: #22c55e;
-      --warn: #f59e0b;
-      --bad: #ef4444;
-      --info: #38bdf8;
-      radius: 16px;
+      --bg:#07111f; --card:#111e38; --line:rgba(255,255,255,.09); --text:#e8eefc; --muted:#94a3c4;
+      --brand:#2f81f7; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444; --info:#38bdf8;
     }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(47, 129, 247, 0.18), transparent 30%),
-        radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 25%),
-        var(--bg);
-      color: var(--text);
-    }
-
-    button, input, select, textarea {
-      font: inherit;
-      color: inherit;
-    }
-
-    a { color: var(--info); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-
-    .hidden { display: none !important; }
-    .muted { color: var(--muted); }
-    .small { font-size: 13px; }
-
-    .login-wrap {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-    }
-
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)), var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 18px;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.28);
-    }
-
-    .login-card {
-      width: min(430px, 94vw);
-      display: grid;
-      gap: 14px;
-    }
-
-    .login-card h1 {
-      margin: 0;
-      font-size: 28px;
-      line-height: 1.15;
-    }
-
-    .login-card p { margin: 0; color: var(--muted); }
-
-    label {
-      display: grid;
-      gap: 7px;
-      margin: 12px 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      background: #0a1426;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 11px 12px;
-      outline: none;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: rgba(47, 129, 247, 0.75);
-      box-shadow: 0 0 0 3px rgba(47,129,247,0.15);
-    }
-
-    .btn {
-      border: 1px solid var(--line);
-      background: #17294d;
-      color: var(--text);
-      border-radius: 12px;
-      padding: 10px 14px;
-      cursor: pointer;
-      transition: 180ms ease;
-      white-space: nowrap;
-    }
-
-    .btn:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.2); }
-    .btn.primary { background: var(--brand); border-color: transparent; }
-    .btn.success { background: #14532d; border-color: rgba(34,197,94,0.3); }
-    .btn.danger { background: #7f1d1d; border-color: rgba(239,68,68,0.35); }
-    .btn.warn { background: #78350f; border-color: rgba(245,158,11,0.35); }
-    .btn.ghost { background: transparent; }
-    .btn.block { width: 100%; }
-    .btn.small { padding: 7px 10px; font-size: 13px; }
-
-    .demo-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .error-text { color: #fca5a5; }
-    .success-box {
-      background: rgba(34,197,94,0.1);
-      border: 1px solid rgba(34,197,94,0.24);
-      color: #bbf7d0;
-      border-radius: 14px;
-      padding: 14px;
-    }
-
-    .app-shell {
-      display: grid;
-      grid-template-columns: 260px 1fr;
-      min-height: 100vh;
-    }
-
-    .sidebar {
-      padding: 20px;
-      border-right: 1px solid var(--line);
-      background: rgba(6, 13, 27, 0.72);
-      backdrop-filter: blur(12px);
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-    }
-
-    .brand h2 {
-      margin: 0;
-      font-size: 24px;
-      letter-spacing: 0.2px;
-    }
-
-    .brand span { color: var(--muted); font-size: 13px; }
-
-    .nav-menu { display: grid; gap: 8px; }
-
-    .nav-btn {
-      width: 100%;
-      text-align: left;
-      padding: 11px 12px;
-      border-radius: 12px;
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--muted);
-      cursor: pointer;
-    }
-
-    .nav-btn:hover, .nav-btn.active {
-      background: rgba(47,129,247,0.12);
-      color: var(--text);
-      border-color: rgba(47,129,247,0.24);
-    }
-
-    .user-box {
-      margin-top: auto;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-    }
-
-    .main {
-      padding: 22px;
-      min-width: 0;
-    }
-
-    .page-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-    }
-
-    .page-head h1 {
-      margin: 0;
-      font-size: 30px;
-      line-height: 1.15;
-    }
-
-    .kpis {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .kpi { padding: 16px; }
-    .kpi-value { font-size: 30px; font-weight: 700; }
-    .kpi-label { color: var(--muted); margin-top: 6px; font-size: 14px; }
-
-    .good { color: #86efac; }
-    .warn { color: #fcd34d; }
-    .bad { color: #fca5a5; }
-    .info { color: #7dd3fc; }
-
-    .split {
-      display: grid;
-      grid-template-columns: 1.25fr 0.75fr;
-      gap: 18px;
-      margin-bottom: 18px;
-    }
-
-    .card-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-
-    .card-head h3 { margin: 0; font-size: 18px; }
-
-    .map {
-      height: 460px;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      z-index: 0;
-    }
-
-    .leaflet-container { z-index: 0; }
-
-    .table-wrap {
-      overflow: auto;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 860px;
-    }
-
-    th, td {
-      padding: 12px;
-      border-bottom: 1px solid var(--line);
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th {
-      color: var(--muted);
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.45px;
-      background: rgba(255,255,255,0.02);
-      position: sticky;
-      top: 0;
-    }
-
-    tr:last-child td { border-bottom: none; }
-    tr.delayed-row td { background: rgba(239,68,68,0.07); }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      min-height: 28px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      font-size: 12px;
-      text-transform: capitalize;
-      background: rgba(255,255,255,0.05);
-    }
-
-    .badge.good { border-color: rgba(34,197,94,0.35); color: #bbf7d0; }
-    .badge.warn { border-color: rgba(245,158,11,0.35); color: #fde68a; }
-    .badge.bad { border-color: rgba(239,68,68,0.35); color: #fecaca; }
-    .badge.info { border-color: rgba(56,189,248,0.35); color: #bae6fd; }
-
-    .row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .spread { justify-content: space-between; align-items: flex-start; }
-
-    .alert-card {
-      border: 1px solid rgba(239,68,68,0.28);
-      background: rgba(239,68,68,0.08);
-      border-radius: 14px;
-      padding: 14px;
-      display: grid;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .shipment-card {
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 12px;
-      background: rgba(255,255,255,0.02);
-    }
-
-    .shipment-card.delayed {
-      border-color: rgba(239,68,68,0.28);
-      background: rgba(239,68,68,0.07);
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(2, 6, 16, 0.72);
-      backdrop-filter: blur(6px);
-      display: grid;
-      place-items: center;
-      z-index: 2000;
-      padding: 20px;
-    }
-
-    .modal {
-      width: min(760px, 96vw);
-      max-height: 88vh;
-      overflow: auto;
-      background: #0d1830;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
-      box-shadow: 0 30px 90px rgba(0,0,0,0.45);
-    }
-
-    .modal-body { padding-top: 8px; }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0 14px;
-    }
-
-    .toast-root {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      display: grid;
-      gap: 10px;
-      z-index: 3000;
-      max-width: min(380px, calc(100vw - 36px));
-    }
-
-    .toast {
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: #132341;
-      box-shadow: 0 18px 50px rgba(0,0,0,0.3);
-    }
-
-    .toast.success { border-color: rgba(34,197,94,0.35); }
-    .toast.error { border-color: rgba(239,68,68,0.4); }
-    .toast.warn { border-color: rgba(245,158,11,0.4); }
-
-    .weather-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      margin: 10px 0;
-      font-weight: 600;
-    }
-
-    .weather-badge.good { border-color: rgba(34,197,94,0.35); color: #bbf7d0; }
-    .weather-badge.warn { border-color: rgba(245,158,11,0.35); color: #fde68a; }
-    .weather-badge.bad { border-color: rgba(239,68,68,0.35); color: #fecaca; }
-    .weather-badge.info { border-color: rgba(56,189,248,0.35); color: #bae6fd; }
-
-    .recommended-box {
-      border: 1px solid rgba(56,189,248,0.28);
-      background: rgba(56,189,248,0.08);
-      border-radius: 14px;
-      padding: 14px;
-      margin: 12px 0;
-    }
-
-    .mini-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    .mini-table th, .mini-table td { padding: 9px 8px; }
-    .selected-row td { background: rgba(56,189,248,0.08); }
-
-    .map-popup {
-      color: #08101f;
-      font-size: 13px;
-      line-height: 1.4;
-      min-width: 170px;
-    }
-
-    @media (max-width: 980px) {
-      .app-shell { grid-template-columns: 1fr; }
-      .sidebar {
-        position: relative;
-        height: auto;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-      }
-      .nav-menu { display: flex; flex-wrap: wrap; }
-      .user-box { margin-top: 0; }
-      .split { grid-template-columns: 1fr; }
-      .form-grid { grid-template-columns: 1fr; }
-      .map { height: 360px; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,sans-serif;background:radial-gradient(circle at top left,rgba(47,129,247,.18),transparent 30%),var(--bg);color:var(--text)}
+    button,input,select,textarea{font:inherit;color:inherit}
+    a{color:var(--info);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .hidden{display:none!important}
+    .muted{color:var(--muted)}
+    .small{font-size:13px}
+    .login-wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015)),var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 18px 60px rgba(0,0,0,.28)}
+    .login-card{width:min(430px,94vw);display:grid;gap:14px}
+    label{display:grid;gap:7px;margin:12px 0;color:var(--muted);font-size:14px}
+    input,select,textarea{width:100%;background:#0a1426;border:1px solid var(--line);border-radius:12px;padding:11px 12px;outline:none}
+    input:focus,select:focus,textarea:focus{border-color:rgba(47,129,247,.75);box-shadow:0 0 0 3px rgba(47,129,247,.15)}
+    .btn{border:1px solid var(--line);background:#17294d;color:var(--text);border-radius:12px;padding:10px 14px;cursor:pointer;transition:180ms ease;white-space:nowrap}
+    .btn:hover{transform:translateY(-1px)}
+    .btn.primary{background:var(--brand);border-color:transparent}
+    .btn.success{background:#14532d}
+    .btn.danger{background:#7f1d1d}
+    .btn.warn{background:#78350f}
+    .btn.ghost{background:transparent}
+    .btn.block{width:100%}
+    .btn.small{padding:7px 10px;font-size:13px}
+    .demo-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .error-text{color:#fca5a5}
+    .success-box{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.24);color:#bbf7d0;border-radius:14px;padding:14px}
+    .app-shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+    .sidebar{padding:20px;border-right:1px solid var(--line);background:rgba(6,13,27,.72);backdrop-filter:blur(12px);display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh}
+    .brand h2{margin:0;font-size:24px}
+    .brand span{color:var(--muted);font-size:13px}
+    .nav-menu{display:grid;gap:8px}
+    .nav-btn{width:100%;text-align:left;padding:11px 12px;border-radius:12px;background:transparent;border:1px solid transparent;color:var(--muted);cursor:pointer}
+    .nav-btn:hover,.nav-btn.active{background:rgba(47,129,247,.12);color:var(--text);border-color:rgba(47,129,247,.24)}
+    .user-box{margin-top:auto;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:12px}
+    .main{padding:22px;min-width:0}
+    .page-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+    .page-head h1{margin:0;font-size:30px;line-height:1.15}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:14px;margin-bottom:18px}
+    .kpi{padding:16px}
+    .kpi-value{font-size:30px;font-weight:700}
+    .kpi-label{color:var(--muted);margin-top:6px;font-size:14px}
+    .good{color:#86efac}.warn{color:#fcd34d}.bad{color:#fca5a5}.info{color:#7dd3fc}
+    .split{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;margin-bottom:18px}
+    .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+    .card-head h3{margin:0;font-size:18px}
+    .map{height:460px;border-radius:14px;overflow:hidden;border:1px solid var(--line);z-index:0}
+    .leaflet-container{z-index:0}
+    .table-wrap{overflow:auto;border-radius:14px;border:1px solid var(--line)}
+    table{width:100%;border-collapse:collapse;min-width:860px}
+    th,td{padding:12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.45px;background:rgba(255,255,255,.02);position:sticky;top:0}
+    tr:last-child td{border-bottom:none}
+    tr.delayed-row td{background:rgba(239,68,68,.07)}
+    .badge{display:inline-flex;align-items:center;min-height:28px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;text-transform:capitalize;background:rgba(255,255,255,.05)}
+    .badge.good{border-color:rgba(34,197,94,.35);color:#bbf7d0}
+    .badge.warn{border-color:rgba(245,158,11,.35);color:#fde68a}
+    .badge.bad{border-color:rgba(239,68,68,.35);color:#fecaca}
+    .badge.info{border-color:rgba(56,189,248,.35);color:#bae6fd}
+    .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .spread{justify-content:space-between;align-items:flex-start}
+    .alert-card{border:1px solid rgba(239,68,68,.28);background:rgba(239,68,68,.08);border-radius:14px;padding:14px;display:grid;gap:12px;margin-bottom:12px}
+    .shipment-card{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;background:rgba(255,255,255,.02)}
+    .shipment-card.delayed{border-color:rgba(239,68,68,.28);background:rgba(239,68,68,.07)}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,16,.72);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:2000;padding:20px}
+    .modal{width:min(760px,96vw);max-height:88vh;overflow:auto;background:#0d1830;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 30px 90px rgba(0,0,0,.45)}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
+    .toast-root{position:fixed;right:18px;bottom:18px;display:grid;gap:10px;z-index:3000;max-width:min(380px,calc(100vw - 36px))}
+    .toast{padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:#132341;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+    .toast.success{border-color:rgba(34,197,94,.35)}
+    .toast.error{border-color:rgba(239,68,68,.4)}
+    .toast.warn{border-color:rgba(245,158,11,.4)}
+    .weather-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);margin:10px 10px 0 0;font-weight:600}
+    .weather-badge.good{border-color:rgba(34,197,94,.35);color:#bbf7d0}
+    .weather-badge.warn{border-color:rgba(245,158,11,.35);color:#fde68a}
+    .weather-badge.bad{border-color:rgba(239,68,68,.35);color:#fecaca}
+    .weather-badge.info{border-color:rgba(56,189,248,.35);color:#bae6fd}
+    .recommended-box{border:1px solid rgba(56,189,248,.28);background:rgba(56,189,248,.08);border-radius:14px;padding:14px;margin:12px 0}
+    .mini-table{width:100%;border-collapse:collapse;margin-top:12px}
+    .mini-table th,.mini-table td{padding:9px 8px}
+    .selected-row td{background:rgba(56,189,248,.08)}
+    .map-popup{color:#08101f;font-size:13px;line-height:1.4;min-width:170px}
+    @media (max-width:980px){
+      .app-shell{grid-template-columns:1fr}
+      .sidebar{position:relative;height:auto;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap}
+      .nav-menu{display:flex;flex-wrap:wrap}
+      .user-box{margin-top:0}
+      .split{grid-template-columns:1fr}
+      .form-grid{grid-template-columns:1fr}
+      .map{height:360px}
     }
   </style>
 </head>
@@ -552,6 +218,30 @@
             <div id="driversTable" class="table-wrap"></div>
           </div>
         </section>
+
+        <section id="tab-driver-monitor" class="tab hidden">
+          <div class="card">
+            <div class="card-head">
+              <h3>Hourly driver monitoring</h3>
+              <div class="row">
+                <button id="createSnapshotBtn" class="btn" type="button">Capture hourly snapshot</button>
+                <button id="refreshMonitorBtn" class="btn" type="button">Refresh</button>
+              </div>
+            </div>
+
+            <div class="row" style="margin-bottom:14px;">
+              <button id="prevDriverBtn" class="btn" type="button">Previous</button>
+              <select id="monitorDriverSelect"></select>
+              <button id="nextDriverBtn" class="btn" type="button">Next</button>
+            </div>
+
+            <div id="driverMonitorSummary"></div>
+
+            <div id="driverMonitorMap" class="map" style="margin:14px 0;"></div>
+
+            <div id="driverMonitorDetails"></div>
+          </div>
+        </section>
       </section>
 
       <section id="driverSection" class="hidden">
@@ -561,34 +251,32 @@
             <button id="refreshDriverBtn" class="btn" type="button">Refresh</button>
           </header>
 
+          <div class="card" id="driverTripCard" style="margin-bottom:18px;">
+            <div class="card-head">
+              <h3>Live trip intelligence</h3>
+              <div class="row">
+                <button id="analyzeAlternateRouteBtn" class="btn" type="button">Analyze AI route</button>
+                <button id="refreshTripBtn" class="btn" type="button">Refresh trip</button>
+              </div>
+            </div>
+
+            <div id="tripIntel"></div>
+            <div id="routeRecommendation"></div>
+
+            <div id="tripMap" class="map" style="margin-top:14px;"></div>
+          </div>
+
           <div class="split">
             <div id="driverProfileCard" class="card"></div>
             <div id="managerContactCard" class="card"></div>
           </div>
 
-          <div class="card" style="margin-bottom: 18px;">
+          <div class="card" style="margin-bottom:18px;">
             <div class="card-head">
               <h3>Assigned shipments</h3>
               <button id="updateGpsBtn" class="btn" type="button">Update my GPS</button>
             </div>
             <div id="driverShipments"></div>
-          </div>
-
-          <div class="split">
-            <div class="card">
-              <div class="card-head">
-                <h3>AI route and weather intelligence</h3>
-                <button id="analyzeRouteBtn" class="btn" type="button">Analyze</button>
-              </div>
-              <div id="routeIntel"></div>
-            </div>
-
-            <div class="card">
-              <div class="card-head">
-                <h3>Route map</h3>
-              </div>
-              <div id="driverMap" class="map"></div>
-            </div>
           </div>
         </section>
       </section>
@@ -604,7 +292,11 @@
       manager: null,
       driver: null,
       fleetMap: null,
-      driverMap: null
+      tripMap: null,
+      monitorMap: null,
+      monitorData: [],
+      monitorIndex: 0,
+      driverTripData: null
     };
 
     const VEHICLE_STATUS_LIST = ["ready_to_load", "loaded", "empty", "delayed", "maintenance"];
@@ -624,6 +316,7 @@
       });
 
       let data = {};
+
       try {
         data = await response.json();
       } catch {
@@ -656,6 +349,7 @@
       if (!iso) return "-";
       const date = new Date(iso);
       if (Number.isNaN(date.getTime())) return "-";
+
       return date.toLocaleString(undefined, {
         month: "short",
         day: "numeric",
@@ -674,6 +368,7 @@
 
     function openModal(title, bodyHtml) {
       const root = $("#modalRoot");
+
       root.innerHTML = `
         <div class="modal-backdrop">
           <div class="modal">
@@ -681,12 +376,13 @@
               <h3>${escapeHtml(title)}</h3>
               <button type="button" class="btn ghost" data-close-modal>Close</button>
             </div>
-            <div class="modal-body">${bodyHtml}</div>
+            <div>${bodyHtml}</div>
           </div>
         </div>
       `;
 
       const backdrop = $(".modal-backdrop", root);
+
       backdrop.addEventListener("click", (event) => {
         if (event.target === backdrop) closeModal();
       });
@@ -721,6 +417,46 @@
       return `<span class="badge ${tone}">${escapeHtml(String(status || "").replaceAll("_", " "))}</span>`;
     }
 
+    function priorityBadge(priority) {
+      const value = String(priority || "regular");
+
+      const tone =
+        value === "delayed"
+          ? "bad"
+          : value === "urgent"
+            ? "warn"
+            : "info";
+
+      return `<span class="badge ${tone}">${escapeHtml(value)}</span>`;
+    }
+
+    function trafficBadge(status) {
+      const value = String(status || "moderate");
+
+      const tone =
+        value === "heavy"
+          ? "bad"
+          : value === "moderate"
+            ? "warn"
+            : "good";
+
+      return `<span class="badge ${tone}">${escapeHtml(value)}</span>`;
+    }
+
+    function formatLocation(location) {
+      if (!location || !Number.isFinite(Number(location.lat))) {
+        return "Unknown";
+      }
+
+      return `${Number(location.lat).toFixed(4)}, ${Number(location.lng).toFixed(4)}`;
+    }
+
+    function formatPoint(point) {
+      if (!point) return "Unknown";
+
+      return `${escapeHtml(point.label || "Point")} <span class="muted small">(${formatLocation(point)})</span>`;
+    }
+
     function isShipmentActiveStatus(status) {
       return !["delivered", "cancelled"].includes(status);
     }
@@ -751,6 +487,7 @@
           const script = document.createElement("script");
           script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&callback=__fleetGoogleReady&v=weekly`;
           script.async = true;
+
           script.onerror = () => {
             clearTimeout(timeout);
             googleLoaderPromise = null;
@@ -767,6 +504,7 @@
     class LeafletAdapter {
       constructor(elementId, center, zoom = 6) {
         this.map = L.map(elementId).setView([center.lat, center.lng], zoom);
+
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "&copy; OpenStreetMap contributors"
         }).addTo(this.map);
@@ -797,6 +535,7 @@
         }).addTo(this.map);
 
         if (popup) marker.bindPopup(popup);
+
         this.markers.push(marker);
         return marker;
       }
@@ -814,12 +553,14 @@
 
         this.lines.push(line);
         this.map.fitBounds(line.getBounds(), { padding: [24, 24] });
+
         return line;
       }
 
       fitPoints(points) {
         const valid = (points || []).filter(Boolean);
         if (!valid.length) return;
+
         const bounds = L.latLngBounds(valid.map((p) => [p.lat, p.lng]));
         this.map.fitBounds(bounds, { padding: [24, 24] });
       }
@@ -899,6 +640,7 @@
       fitPoints(points) {
         const valid = (points || []).filter(Boolean);
         if (!valid.length) return;
+
         const bounds = new google.maps.LatLngBounds();
         valid.forEach((p) => bounds.extend({ lat: p.lat, lng: p.lng }));
         this.map.fitBounds(bounds, 24);
@@ -933,6 +675,7 @@
 
     async function onLogin(event) {
       event.preventDefault();
+
       const errorEl = $("#loginError");
       errorEl.classList.add("hidden");
 
@@ -948,6 +691,7 @@
 
         state.token = data.token;
         localStorage.setItem("fleet_token", data.token);
+
         await bootstrap();
       } catch (error) {
         errorEl.textContent = error.message;
@@ -958,6 +702,7 @@
     async function bootstrap() {
       try {
         const me = await api("/auth/me");
+
         state.user = me.user;
         state.managerContact = me.managerContact;
 
@@ -970,12 +715,14 @@
           renderNav("manager");
           $("#managerSection").classList.remove("hidden");
           $("#driverSection").classList.add("hidden");
+
           await loadManager();
           showTab("tab-overview");
         } else {
           renderNav("driver");
           $("#driverSection").classList.remove("hidden");
           $("#managerSection").classList.add("hidden");
+
           await loadDriver();
           showTab("tab-driver");
         }
@@ -986,12 +733,6 @@
 
     function logout() {
       localStorage.removeItem("fleet_token");
-      state.token = "";
-      state.user = null;
-      state.manager = null;
-      state.driver = null;
-      state.fleetMap = null;
-      state.driverMap = null;
       window.location.reload();
     }
 
@@ -1011,6 +752,7 @@
           <button class="nav-btn" type="button" data-tab="tab-vehicles">Vehicles</button>
           <button class="nav-btn" type="button" data-tab="tab-shipments">Shipments</button>
           <button class="nav-btn" type="button" data-tab="tab-drivers">Drivers</button>
+          <button class="nav-btn" type="button" data-tab="tab-driver-monitor">Driver Monitor</button>
         `;
       } else {
         nav.innerHTML = `
@@ -1025,6 +767,7 @@
 
     function showTab(tabId) {
       $$(".tab").forEach((tab) => tab.classList.add("hidden"));
+
       const tab = document.getElementById(tabId);
       if (tab) tab.classList.remove("hidden");
 
@@ -1036,8 +779,14 @@
         state.fleetMap.invalidate();
       }
 
-      if (tabId === "tab-driver" && state.driverMap?.invalidate) {
-        state.driverMap.invalidate();
+      if (tabId === "tab-driver") {
+        if (state.tripMap?.invalidate) state.tripMap.invalidate();
+        else loadDriverTrip();
+      }
+
+      if (tabId === "tab-driver-monitor") {
+        if (state.monitorMap?.invalidate) state.monitorMap.invalidate();
+        else loadDriverMonitor();
       }
     }
 
@@ -1125,6 +874,7 @@
       });
 
       if (points.length) state.fleetMap.fitPoints(points);
+
       $("#mapTimestamp").textContent = `Updated ${new Date().toLocaleTimeString()}`;
     }
 
@@ -1151,14 +901,17 @@
             <div>
               <strong>${escapeHtml(shipment.code)}</strong>
               • ${escapeHtml(shipment.vehicle?.plate || "Unassigned")}
+
               <div class="muted small">
                 ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
                 • ETA ${fmtDateTime(shipment.eta)}
               </div>
+
               <div class="muted small">
                 Driver: ${escapeHtml(shipment.driver?.name || "-")}
                 ${shipment.driver?.phone ? `• <a href="${telHref(shipment.driver.phone)}">${escapeHtml(shipment.driver.phone)}</a>` : ""}
               </div>
+
               <div class="muted small">Reason: ${escapeHtml(shipment.delayReason || "ETA passed")}</div>
             </div>
 
@@ -1177,6 +930,7 @@
 
     function renderOverviewShipments() {
       const active = state.manager.shipments.filter((s) => isShipmentActiveStatus(s.status));
+
       active.sort(
         (a, b) =>
           (b.delayed ? 1 : 0) - (a.delayed ? 1 : 0) ||
@@ -1197,12 +951,15 @@
             <tr>
               <th>Code</th>
               <th>Route</th>
+              <th>Cargo</th>
+              <th>Priority</th>
               <th>Weight</th>
               <th>Status</th>
               <th>Vehicle</th>
               <th>Manager status</th>
               <th>ETA</th>
               <th>Driver</th>
+              <th>AI Analyst</th>
             </tr>
           </thead>
           <tbody>
@@ -1231,6 +988,8 @@
                     ${escapeHtml(shipment.origin.label)}
                     <div class="muted small">→ ${escapeHtml(shipment.destination.label)}</div>
                   </td>
+                  <td>${escapeHtml(shipment.goodsDescription || "General cargo")}</td>
+                  <td>${priorityBadge(shipment.priority)}</td>
                   <td>${escapeHtml(shipment.weightKg)} kg</td>
                   <td>
                     ${badge(shipment.status)}
@@ -1248,6 +1007,11 @@
                       ? `${escapeHtml(shipment.driver.name)}<br />
                          <a href="${telHref(shipment.driver.phone)}">${escapeHtml(shipment.driver.phone || "")}</a>`
                       : "-"}
+                  </td>
+                  <td>
+                    <button class="btn primary small" type="button" data-ai-assign="${shipment.id}">
+                      AI Recommend Optimal Vehicle
+                    </button>
                   </td>
                 </tr>
               `;
@@ -1359,6 +1123,7 @@
         <form id="vehicleForm">
           <div class="form-grid">
             <label>Plate *<input id="vPlate" required placeholder="DL-01-AB-1234" /></label>
+
             <label>Type
               <select id="vType">
                 <option>truck</option>
@@ -1367,7 +1132,9 @@
                 <option>tempo</option>
               </select>
             </label>
+
             <label>Capacity kg<input id="vCapacity" type="number" min="0" value="1000" /></label>
+
             <label>Status
               <select id="vStatus">
                 ${VEHICLE_STATUS_LIST.map((status) => `
@@ -1375,15 +1142,19 @@
                 `).join("")}
               </select>
             </label>
+
             <label>Driver
               <select id="vDriver">
                 <option value="">Unassigned</option>
                 ${driverOpts}
               </select>
             </label>
+
+            <label>Fuel consumption L/100km<input id="vFuel" type="number" step="0.1" value="16" /></label>
             <label>Latitude<input id="vLat" type="number" step="any" placeholder="20.5937" /></label>
             <label>Longitude<input id="vLng" type="number" step="any" placeholder="78.9629" /></label>
           </div>
+
           <div class="row" style="margin-top:14px;">
             <button class="btn primary" type="submit">Save vehicle</button>
           </div>
@@ -1399,18 +1170,22 @@
             type: $("#vType").value,
             capacityKg: Number($("#vCapacity").value || 0),
             status: $("#vStatus").value,
-            driverId: $("#vDriver").value || null
+            driverId: $("#vDriver").value || null,
+            fuelConsumptionLPer100Km: Number($("#vFuel").value || 16)
           };
 
           const lat = Number($("#vLat").value);
           const lng = Number($("#vLng").value);
+
           if (Number.isFinite(lat) && Number.isFinite(lng)) {
             body.location = { lat, lng };
           }
 
           await api("/vehicles", { method: "POST", body });
+
           toast("Vehicle added", "success");
           closeModal();
+
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
@@ -1427,6 +1202,7 @@
             <label>Username *<input id="dUsername" required placeholder="driver@fleet.com" /></label>
             <label>Password *<input id="dPassword" type="password" required minlength="6" /></label>
           </div>
+
           <div class="row" style="margin-top:14px;">
             <button class="btn primary" type="submit">Save driver</button>
           </div>
@@ -1449,6 +1225,7 @@
 
           toast("Driver added", "success");
           closeModal();
+
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
@@ -1477,6 +1254,16 @@
             <label>Weight kg<input id="sWeight" type="number" min="0" value="500" /></label>
             <label>ETA minutes<input id="sEta" type="number" min="5" value="90" /></label>
 
+            <label>Cargo goods description<input id="sGoods" value="General cargo" /></label>
+
+            <label>Priority
+              <select id="sPriority">
+                <option value="regular">regular</option>
+                <option value="urgent">urgent</option>
+                <option value="delayed">delayed</option>
+              </select>
+            </label>
+
             <label>Assign vehicle
               <select id="sVehicle">
                 <option value="">Unassigned</option>
@@ -1484,6 +1271,7 @@
               </select>
             </label>
           </div>
+
           <div class="row" style="margin-top:14px;">
             <button class="btn primary" type="submit">Save shipment</button>
           </div>
@@ -1505,12 +1293,15 @@
               destinationLng: $("#sDestLng").value,
               weightKg: $("#sWeight").value,
               etaMinutes: $("#sEta").value,
-              vehicleId: $("#sVehicle").value || null
+              vehicleId: $("#sVehicle").value || null,
+              goodsDescription: $("#sGoods").value.trim(),
+              priority: $("#sPriority").value
             }
           });
 
           toast("Shipment created", "success");
           closeModal();
+
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
@@ -1524,6 +1315,7 @@
           <label>Delay reason
             <textarea id="delayNote" rows="4" placeholder="Traffic, weather, breakdown, road closure..."></textarea>
           </label>
+
           <div class="row" style="margin-top:12px;">
             <button class="btn danger" type="submit">Submit delay</button>
           </div>
@@ -1544,11 +1336,76 @@
 
           toast("Delay reported to manager", "success");
           closeModal();
+
           await loadDriver();
+          await loadDriverTrip();
         } catch (error) {
           toast(error.message, "error");
         }
       });
+    }
+
+    async function openAiAssignmentModal(shipmentId) {
+      try {
+        const data = await api(`/ai/recommend-vehicle/${shipmentId}`);
+        const recommendation = data.recommendation;
+
+        openModal("AI Recommended Optimal Vehicle", `
+          <div class="recommended-box">
+            <strong>${escapeHtml(recommendation.vehicle.plate)}</strong>
+
+            <div class="muted small" style="margin-top:6px;">
+              ${escapeHtml(recommendation.vehicle.type)} •
+              ${escapeHtml(recommendation.vehicle.capacityKg)} kg capacity •
+              ${escapeHtml(recommendation.vehicle.status.replaceAll("_", " "))}
+            </div>
+          </div>
+
+          <table class="mini-table">
+            <tbody>
+              <tr>
+                <td class="muted">Recommended driver</td>
+                <td>
+                  ${escapeHtml(recommendation.driver?.name || "No driver")}
+                  ${
+                    recommendation.driver?.phone
+                      ? `<br /><a href="${telHref(recommendation.driver.phone)}">${escapeHtml(recommendation.driver.phone)}</a>`
+                      : ""
+                  }
+                </td>
+              </tr>
+
+              <tr>
+                <td class="muted">Distance from origin</td>
+                <td>${escapeHtml(recommendation.distanceKm)} km</td>
+              </tr>
+
+              <tr>
+                <td class="muted">Capacity utilization</td>
+                <td>${escapeHtml(recommendation.utilizationPercent)}%</td>
+              </tr>
+
+              <tr>
+                <td class="muted">AI score</td>
+                <td>${escapeHtml(recommendation.score)}</td>
+              </tr>
+
+              <tr>
+                <td class="muted">Explanation</td>
+                <td>${escapeHtml(recommendation.reason)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="row" style="margin-top:14px;">
+            <button class="btn primary" type="button" data-confirm-ai="${escapeHtml(shipmentId)}">
+              Confirm AI assignment
+            </button>
+          </div>
+        `);
+      } catch (error) {
+        toast(error.message, "error");
+      }
     }
 
     async function loadDriver() {
@@ -1557,13 +1414,6 @@
         renderDriver();
       } catch (error) {
         toast(error.message, "error");
-        return;
-      }
-
-      try {
-        await analyzeRouteForActive(true);
-      } catch {
-        // Route analysis is non-blocking for driver console rendering.
       }
     }
 
@@ -1572,8 +1422,13 @@
 
       $("#driverProfileCard").innerHTML = `
         <div class="card-head"><h3>My profile</h3></div>
+
         <p style="margin:8px 0;"><strong>${escapeHtml(data.user.name)}</strong></p>
-        <p class="muted" style="margin:8px 0;">${escapeHtml(data.user.username)} • ${escapeHtml(data.user.phone || "No phone")}</p>
+
+        <p class="muted" style="margin:8px 0;">
+          ${escapeHtml(data.user.username)} • ${escapeHtml(data.user.phone || "No phone")}
+        </p>
+
         <p style="margin:8px 0;">
           Vehicle:
           <strong>${escapeHtml(data.vehicle?.plate || "Not assigned")}</strong>
@@ -1585,31 +1440,27 @@
 
       $("#managerContactCard").innerHTML = `
         <div class="card-head"><h3>Manager contact</h3></div>
+
         <p style="margin:8px 0;"><strong>${escapeHtml(manager?.name || "Fleet Manager")}</strong></p>
+
         <p class="muted" style="margin:8px 0;">${escapeHtml(manager?.phone || "No phone")}</p>
+
         <div class="row">
           <a class="btn" href="${telHref(manager?.phone)}">Call manager</a>
           <button class="btn ghost" id="copyManagerPhone" type="button">Copy number</button>
         </div>
+
         <p class="muted small" style="margin-bottom:0;">
           Use this contact for accidents, breakdowns, road closures, or delay escalation.
         </p>
       `;
-
-      $("#copyManagerPhone")?.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(manager?.phone || "");
-          toast("Manager number copied", "success");
-        } catch {
-          toast("Copy failed", "error");
-        }
-      });
 
       renderDriverShipments();
     }
 
     function renderDriverShipments() {
       const active = state.driver.activeShipments || [];
+
       const history = (state.driver.shipments || []).filter(
         (s) => !isShipmentActiveStatus(s.status)
       );
@@ -1626,12 +1477,23 @@
           <div class="row spread">
             <div>
               <strong>${escapeHtml(shipment.code)}</strong>
+
               <div class="muted small">
                 ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
               </div>
+
               <div class="muted small">
                 Weight ${escapeHtml(shipment.weightKg)} kg • ETA ${fmtDateTime(shipment.eta)} • ${badge(shipment.status)}
               </div>
+
+              <div class="muted small">
+                Cargo: ${escapeHtml(shipment.goodsDescription || "General cargo")}
+              </div>
+
+              <div class="muted small">
+                Priority: ${priorityBadge(shipment.priority)}
+              </div>
+
               ${shipment.delayReason ? `<div class="error-text small">Delay: ${escapeHtml(shipment.delayReason)}</div>` : ""}
             </div>
 
@@ -1640,7 +1502,6 @@
               <button class="btn" type="button" data-driver-action="arrived" data-shipment="${shipment.id}">Arrived</button>
               <button class="btn success" type="button" data-driver-action="delivered" data-shipment="${shipment.id}">Delivered</button>
               <button class="btn danger" type="button" data-driver-action="delayed" data-shipment="${shipment.id}">Report delay</button>
-              <button class="btn ghost" type="button" data-driver-route="${shipment.id}">Route</button>
             </div>
           </div>
         </div>
@@ -1650,10 +1511,14 @@
         ? `<h4 class="muted">History</h4>` + history.slice(0, 5).map((shipment) => `
           <div class="shipment-card">
             <strong>${escapeHtml(shipment.code)}</strong>
+
             <div class="muted small">
               ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
             </div>
-            <div class="muted small">${badge(shipment.status)} • Delivered ${fmtDateTime(shipment.deliveredAt)}</div>
+
+            <div class="muted small">
+              ${badge(shipment.status)} • Delivered ${fmtDateTime(shipment.deliveredAt)}
+            </div>
           </div>
         `).join("")
         : "";
@@ -1679,7 +1544,9 @@
             });
 
             toast("GPS location updated", "success");
+
             await loadDriver();
+            await loadDriverTrip();
           } catch (error) {
             toast(error.message, "error");
           }
@@ -1690,143 +1557,497 @@
       );
     }
 
-    async function analyzeRouteForActive(silent = false) {
-      const active = state.driver?.activeShipments || [];
-      const intel = $("#routeIntel");
+    async function loadDriverTrip() {
+      const intel = $("#tripIntel");
+      if (!intel) return;
 
-      if (!active.length) {
-        intel.innerHTML = `<div class="muted">No active shipment for route analysis.</div>`;
+      try {
+        intel.innerHTML = `<div class="muted">Loading live trip intelligence...</div>`;
+
+        const data = await api("/driver/trip-intelligence");
+        state.driverTripData = data;
+
+        renderTripIntel(data);
+
+        if (data.hasTrip && data.trip) {
+          await renderTripMap(data.trip, null);
+        } else if (state.tripMap) {
+          state.tripMap.clear();
+        }
+      } catch (error) {
+        intel.innerHTML = `<div class="error-text">${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    function renderTripIntel(data) {
+      const intel = $("#tripIntel");
+      if (!intel) return;
+
+      if (!data.hasTrip) {
+        intel.innerHTML = `<div class="muted">No active trip assigned.</div>`;
         return;
       }
 
-      await analyzeRoute(active[0], silent);
-    }
+      const trip = data.trip;
+      const weather = trip.weather || {};
 
-    async function analyzeRoute(shipment, silent = false) {
-      const intel = $("#routeIntel");
+      const currentWeather = weather.current || { level: "unknown", summary: "No weather data" };
+      const destinationWeather = weather.destination || { level: "unknown", summary: "No weather data" };
 
-      try {
-        intel.innerHTML = `<div class="muted">Analyzing destination weather and route risk...</div>`;
-
-        const params = new URLSearchParams({
-          originLat: shipment.origin.lat,
-          originLng: shipment.origin.lng,
-          destinationLat: shipment.destination.lat,
-          destinationLng: shipment.destination.lng
-        });
-
-        const data = await api(`/route/recommend?${params.toString()}`);
-        renderRouteIntel(data, shipment);
-        await renderRouteMap(data, shipment);
-
-        if (!silent) toast("Route analysis complete", "success");
-      } catch (error) {
-        intel.innerHTML = `<div class="error-text">${escapeHtml(error.message)}</div>`;
-        if (!silent) toast(error.message, "error");
-      }
-    }
-
-    function renderRouteIntel(data, shipment) {
-      const weather = data.weather;
-      const recommended = data.options.find((option) => option.id === data.recommendedId);
-      const weatherTone =
-        weather.level === "severe"
+      const weatherTone = (level) =>
+        level === "severe"
           ? "bad"
-          : weather.level === "caution"
+          : level === "caution"
             ? "warn"
-            : weather.level === "good"
+            : level === "good"
               ? "good"
               : "info";
 
-      $("#routeIntel").innerHTML = `
-        <div class="muted small">
-          ${escapeHtml(shipment.code)}: ${escapeHtml(shipment.origin.label)} → ${escapeHtml(shipment.destination.label)}
-        </div>
+      const rows = [
+        ["Current location", formatLocation(trip.currentLocation)],
+        ["Starting point", formatPoint(trip.startingPoint)],
+        [
+          "Intermediate stops",
+          trip.intermediateStops?.length
+            ? trip.intermediateStops.map(formatPoint).join("<br />")
+            : "None"
+        ],
+        ["Ending point", formatPoint(trip.endingPoint)],
+        ["Distance", `${escapeHtml(trip.distanceKm)} km`],
+        ["Traffic status", trafficBadge(trip.traffic?.status)],
+        ["Traffic note", escapeHtml(trip.traffic?.note || "-")],
+        ["ETA", `${escapeHtml(trip.etaMinutes)} minutes`],
+        ["Expected arrival", fmtDateTime(trip.expectedArrival)],
+        [
+          "Fuel consumption",
+          `${escapeHtml(trip.fuel?.rateLPer100Km)} L/100 km • Estimated ${escapeHtml(trip.fuel?.estimatedLiters)} L`
+        ],
+        ["Total cargo weight", `${escapeHtml(trip.totalWeightKg)} kg`],
+        ["Cargo goods description", escapeHtml(trip.goodsDescription || "General cargo")],
+        ["Priority", priorityBadge(trip.priority)]
+      ];
 
-        <div class="weather-badge ${weatherTone}">
-          ${escapeHtml(weather.level.toUpperCase())}: ${escapeHtml(weather.summary)}
-        </div>
+      intel.innerHTML = `
+        <div class="row">
+          <span class="weather-badge ${weatherTone(currentWeather.level)}">
+            Live weather: ${escapeHtml(currentWeather.summary)}
+          </span>
 
-        <p class="muted small">
-          Temperature: ${weather.raw?.temperature ?? "-"}°C •
-          Wind: ${weather.raw?.windspeed ?? "-"} km/h •
-          Google Distance Matrix used: ${data.googleUsed ? "Yes" : "No"}
-        </p>
-
-        <div class="recommended-box">
-          <strong>Recommended: ${escapeHtml(recommended.name)}</strong>
-          <div class="muted small">${escapeHtml(data.recommendationReason)}</div>
-          <div class="row small" style="margin-top:8px;">
-            <span>Distance: ${escapeHtml(recommended.distanceKm)} km</span>
-            <span>ETA: ${escapeHtml(recommended.etaMinutes)} min</span>
-            <span>Risk: ${escapeHtml(recommended.riskScore)}/100 (${escapeHtml(recommended.riskLevel)})</span>
-          </div>
+          <span class="weather-badge ${weatherTone(destinationWeather.level)}">
+            Destination weather: ${escapeHtml(destinationWeather.summary)}
+          </span>
         </div>
 
         <table class="mini-table">
-          <thead>
-            <tr>
-              <th>Route</th>
-              <th>Distance</th>
-              <th>ETA</th>
-              <th>Risk</th>
-            </tr>
-          </thead>
           <tbody>
-            ${data.options.map((option) => `
-              <tr class="${option.id === data.recommendedId ? "selected-row" : ""}">
-                <td>${escapeHtml(option.name)}</td>
-                <td>${escapeHtml(option.distanceKm)} km</td>
-                <td>${escapeHtml(option.etaMinutes)} min</td>
-                <td>${escapeHtml(option.riskScore)} (${escapeHtml(option.riskLevel)})</td>
-              </tr>
-            `).join("")}
+            ${rows
+              .map(
+                ([label, value]) => `
+                  <tr>
+                    <td class="muted">${escapeHtml(label)}</td>
+                    <td>${value}</td>
+                  </tr>
+                `
+              )
+              .join("")}
           </tbody>
         </table>
       `;
     }
 
-    async function renderRouteMap(data, shipment) {
-      const origin = shipment.origin;
-      const destination = shipment.destination;
+    async function renderTripMap(trip, routeData = null) {
+      const center =
+        trip.currentLocation ||
+        trip.startingPoint || { lat: 20.5937, lng: 78.9629 };
 
-      if (!state.driverMap) {
-        state.driverMap = await MapFactory.init("driverMap", origin, 6);
+      if (!state.tripMap) {
+        state.tripMap = await MapFactory.init("tripMap", center, 6);
       } else {
-        state.driverMap.clear();
+        state.tripMap.clear();
       }
 
-      state.driverMap.addMarker({
-        lat: origin.lat,
-        lng: origin.lng,
-        color: "#22c55e",
-        title: "Origin",
-        popup: `<div class="map-popup">Origin: ${escapeHtml(origin.label)}</div>`
+      const points = [];
+
+      if (trip.currentLocation) {
+        state.tripMap.addMarker({
+          lat: trip.currentLocation.lat,
+          lng: trip.currentLocation.lng,
+          color: "#a78bfa",
+          title: "Current location",
+          popup: `<div class="map-popup">Current location</div>`
+        });
+
+        points.push(trip.currentLocation);
+      }
+
+      if (trip.startingPoint) {
+        state.tripMap.addMarker({
+          lat: trip.startingPoint.lat,
+          lng: trip.startingPoint.lng,
+          color: "#22c55e",
+          title: "Starting point",
+          popup: `<div class="map-popup">Starting point: ${escapeHtml(trip.startingPoint.label || "")}</div>`
+        });
+
+        points.push(trip.startingPoint);
+      }
+
+      (trip.intermediateStops || []).forEach((stop, index) => {
+        state.tripMap.addMarker({
+          lat: stop.lat,
+          lng: stop.lng,
+          color: "#f59e0b",
+          title: stop.label || `Stop ${index + 1}`,
+          popup: `<div class="map-popup">Intermediate stop: ${escapeHtml(stop.label || "")}</div>`
+        });
+
+        points.push(stop);
       });
 
-      state.driverMap.addMarker({
-        lat: destination.lat,
-        lng: destination.lng,
-        color: "#ef4444",
-        title: "Destination",
-        popup: `<div class="map-popup">Destination: ${escapeHtml(destination.label)}</div>`
+      if (trip.endingPoint) {
+        state.tripMap.addMarker({
+          lat: trip.endingPoint.lat,
+          lng: trip.endingPoint.lng,
+          color: "#ef4444",
+          title: "Destination",
+          popup: `<div class="map-popup">Destination: ${escapeHtml(trip.endingPoint.label || "")}</div>`
+        });
+
+        points.push(trip.endingPoint);
+      }
+
+      if (routeData) {
+        const recommended = routeData.options.find((option) => option.id === routeData.recommendedId);
+        const alternate = routeData.options.find((option) => option.id !== routeData.recommendedId);
+
+        if (alternate) {
+          state.tripMap.drawPath(alternate.path, "#94a3c4", true);
+        }
+
+        if (recommended) {
+          state.tripMap.drawPath(
+            recommended.path,
+            routeData.recommendedId === "alternate" ? "#f59e0b" : "#2f81f7"
+          );
+        }
+      } else if (trip.path?.length) {
+        state.tripMap.drawPath(trip.path, "#38bdf8");
+      }
+
+      if (points.length) {
+        state.tripMap.fitPoints(points);
+      }
+
+      if (state.tripMap.invalidate) {
+        state.tripMap.invalidate();
+      }
+    }
+
+    async function analyzeAlternateRoute() {
+      const recommendationEl = $("#routeRecommendation");
+      const tripData = state.driverTripData;
+
+      if (!tripData?.trip) {
+        toast("No active trip available for route analysis.", "warn");
+        return;
+      }
+
+      try {
+        recommendationEl.innerHTML = `<div class="muted">Analyzing AI route and weather...</div>`;
+
+        const params = new URLSearchParams({
+          originLat: tripData.trip.startingPoint.lat,
+          originLng: tripData.trip.startingPoint.lng,
+          destinationLat: tripData.trip.endingPoint.lat,
+          destinationLng: tripData.trip.endingPoint.lng
+        });
+
+        const routeData = await api(`/route/recommend?${params.toString()}`);
+        const recommended = routeData.options.find((option) => option.id === routeData.recommendedId);
+
+        recommendationEl.innerHTML = `
+          <div class="recommended-box">
+            <strong>Recommended: ${escapeHtml(recommended.name)}</strong>
+
+            <div class="muted small" style="margin-top:6px;">
+              ${escapeHtml(routeData.recommendationReason)}
+            </div>
+
+            <div class="row small" style="margin-top:8px;">
+              <span>Distance: ${escapeHtml(recommended.distanceKm)} km</span>
+              <span>ETA: ${escapeHtml(recommended.etaMinutes)} min</span>
+              <span>Risk: ${escapeHtml(recommended.riskScore)}/100 (${escapeHtml(recommended.riskLevel)})</span>
+            </div>
+          </div>
+
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Route</th>
+                <th>Distance</th>
+                <th>ETA</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              ${routeData.options.map((option) => `
+                <tr class="${option.id === routeData.recommendedId ? "selected-row" : ""}">
+                  <td>${escapeHtml(option.name)}</td>
+                  <td>${escapeHtml(option.distanceKm)} km</td>
+                  <td>${escapeHtml(option.etaMinutes)} min</td>
+                  <td>${escapeHtml(option.riskScore)} (${escapeHtml(option.riskLevel)})</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+
+        await renderTripMap(tripData.trip, routeData);
+
+        toast("AI route analysis complete", "success");
+      } catch (error) {
+        recommendationEl.innerHTML = `<div class="error-text">${escapeHtml(error.message)}</div>`;
+        toast(error.message, "error");
+      }
+    }
+
+    async function loadDriverMonitor() {
+      const summary = $("#driverMonitorSummary");
+      if (!summary) return;
+
+      try {
+        summary.innerHTML = `<div class="muted">Loading driver monitor...</div>`;
+
+        const data = await api("/manager/driver-monitor");
+        state.monitorData = data.drivers || [];
+
+        if (state.monitorIndex >= state.monitorData.length) {
+          state.monitorIndex = 0;
+        }
+
+        renderDriverMonitor();
+      } catch (error) {
+        summary.innerHTML = `<div class="error-text">${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    function renderDriverMonitor() {
+      const select = $("#monitorDriverSelect");
+      const summary = $("#driverMonitorSummary");
+      const details = $("#driverMonitorDetails");
+
+      if (!select || !summary || !details) return;
+
+      if (!state.monitorData.length) {
+        select.innerHTML = "";
+        summary.innerHTML = `<div class="muted">No drivers found.</div>`;
+        details.innerHTML = "";
+
+        if (state.monitorMap) state.monitorMap.clear();
+
+        return;
+      }
+
+      select.innerHTML = state.monitorData
+        .map(
+          (item, index) => `
+            <option value="${item.driver.id}" ${index === state.monitorIndex ? "selected" : ""}>
+              ${escapeHtml(item.driver.name)} ${item.hasTrip ? "• Active trip" : "• No active trip"}
+            </option>
+          `
+        )
+        .join("");
+
+      const item = state.monitorData[state.monitorIndex];
+      if (!item) return;
+
+      if (!item.hasTrip) {
+        summary.innerHTML = `
+          <div class="recommended-box">
+            <strong>${escapeHtml(item.driver.name)}</strong>
+
+            <div class="muted small">${escapeHtml(item.driver.phone || "No phone")}</div>
+
+            <div class="muted small" style="margin-top:8px;">
+              Vehicle: ${escapeHtml(item.vehicle?.plate || "Not assigned")}
+            </div>
+
+            <div class="muted small">
+              Last update: ${fmtDateTime(item.lastUpdate)}
+            </div>
+
+            <div class="muted small" style="margin-top:8px;">No active trip assigned.</div>
+          </div>
+        `;
+
+        details.innerHTML = "";
+
+        renderMonitorMap(item);
+
+        return;
+      }
+
+      const trip = item.trip;
+
+      summary.innerHTML = `
+        <div class="recommended-box">
+          <strong>${escapeHtml(item.driver.name)}</strong>
+          • ${escapeHtml(item.driver.phone || "No phone")}
+
+          <div class="muted small" style="margin-top:8px;">
+            Vehicle: ${escapeHtml(item.vehicle?.plate || "-")}
+            • Primary shipment: ${escapeHtml(item.primaryShipment?.code || "-")}
+            • Active shipments: ${escapeHtml(item.activeShipmentCount)}
+          </div>
+
+          <div class="row small" style="margin-top:8px;">
+            <span>Priority: ${priorityBadge(trip.priority)}</span>
+            <span>Traffic: ${trafficBadge(trip.traffic?.status)}</span>
+            <span>ETA: ${escapeHtml(trip.etaMinutes)} min</span>
+            <span>Fuel: ${escapeHtml(trip.fuel?.estimatedLiters)} L</span>
+          </div>
+
+          <div class="muted small" style="margin-top:8px;">
+            Last update: ${fmtDateTime(item.lastUpdate)}
+          </div>
+        </div>
+      `;
+
+      const rows = [
+        ["Current location", formatLocation(trip.currentLocation)],
+        ["Starting point", formatPoint(trip.startingPoint)],
+        [
+          "Intermediate stops",
+          trip.intermediateStops?.length
+            ? trip.intermediateStops.map(formatPoint).join("<br />")
+            : "None"
+        ],
+        ["Ending point", formatPoint(trip.endingPoint)],
+        ["Distance", `${escapeHtml(trip.distanceKm)} km`],
+        ["ETA", `${escapeHtml(trip.etaMinutes)} minutes`],
+        ["Expected arrival", fmtDateTime(trip.expectedArrival)],
+        [
+          "Fuel consumption",
+          `${escapeHtml(trip.fuel?.rateLPer100Km)} L/100 km • Estimated ${escapeHtml(trip.fuel?.estimatedLiters)} L`
+        ],
+        ["Total cargo weight", `${escapeHtml(trip.totalWeightKg)} kg`],
+        ["Cargo description", escapeHtml(trip.goodsDescription || "General cargo")]
+      ];
+
+      details.innerHTML = `
+        <table class="mini-table">
+          <tbody>
+            ${rows
+              .map(
+                ([label, value]) => `
+                  <tr>
+                    <td class="muted">${escapeHtml(label)}</td>
+                    <td>${value}</td>
+                  </tr>
+                `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `;
+
+      renderMonitorMap(item);
+    }
+
+    async function renderMonitorMap(item) {
+      const mapCenter =
+        item.trip?.currentLocation ||
+        item.trip?.startingPoint ||
+        item.vehicle?.location || { lat: 20.5937, lng: 78.9629 };
+
+      if (!state.monitorMap) {
+        state.monitorMap = await MapFactory.init("driverMonitorMap", mapCenter, 6);
+      } else {
+        state.monitorMap.clear();
+      }
+
+      const points = [];
+
+      if (!item.hasTrip) {
+        if (item.vehicle?.location) {
+          state.monitorMap.addMarker({
+            lat: item.vehicle.location.lat,
+            lng: item.vehicle.location.lng,
+            color: "#a78bfa",
+            title: item.vehicle.plate,
+            popup: `<div class="map-popup">${escapeHtml(item.vehicle.plate)}<br />No active trip</div>`
+          });
+
+          points.push(item.vehicle.location);
+        }
+
+        if (points.length) state.monitorMap.fitPoints(points);
+
+        return;
+      }
+
+      const trip = item.trip;
+
+      if (trip.currentLocation) {
+        state.monitorMap.addMarker({
+          lat: trip.currentLocation.lat,
+          lng: trip.currentLocation.lng,
+          color: "#a78bfa",
+          title: "Current location",
+          popup: `<div class="map-popup">Current location</div>`
+        });
+
+        points.push(trip.currentLocation);
+      }
+
+      if (trip.startingPoint) {
+        state.monitorMap.addMarker({
+          lat: trip.startingPoint.lat,
+          lng: trip.startingPoint.lng,
+          color: "#22c55e",
+          title: "Starting point",
+          popup: `<div class="map-popup">Starting point: ${escapeHtml(trip.startingPoint.label || "")}</div>`
+        });
+
+        points.push(trip.startingPoint);
+      }
+
+      (trip.intermediateStops || []).forEach((stop, index) => {
+        state.monitorMap.addMarker({
+          lat: stop.lat,
+          lng: stop.lng,
+          color: "#f59e0b",
+          title: stop.label || `Stop ${index + 1}`,
+          popup: `<div class="map-popup">Intermediate stop: ${escapeHtml(stop.label || "")}</div>`
+        });
+
+        points.push(stop);
       });
 
-      const recommended = data.options.find((option) => option.id === data.recommendedId);
-      const alternate = data.options.find((option) => option.id !== data.recommendedId);
+      if (trip.endingPoint) {
+        state.monitorMap.addMarker({
+          lat: trip.endingPoint.lat,
+          lng: trip.endingPoint.lng,
+          color: "#ef4444",
+          title: "Destination",
+          popup: `<div class="map-popup">Destination: ${escapeHtml(trip.endingPoint.label || "")}</div>`
+        });
 
-      if (alternate) {
-        state.driverMap.drawPath(alternate.path, "#94a3c4", true);
+        points.push(trip.endingPoint);
       }
 
-      if (recommended) {
-        state.driverMap.drawPath(
-          recommended.path,
-          data.recommendedId === "alternate" ? "#f59e0b" : "#2f81f7"
-        );
+      if (trip.path?.length) {
+        state.monitorMap.drawPath(trip.path, "#38bdf8");
       }
 
-      state.driverMap.fitPoints([origin, destination]);
+      if (points.length) {
+        state.monitorMap.fitPoints(points);
+      }
+
+      if (state.monitorMap.invalidate) {
+        state.monitorMap.invalidate();
+      }
     }
 
     async function handleGlobalClicks(event) {
@@ -1898,7 +2119,9 @@
           });
 
           toast("Shipment updated", "success");
+
           await loadDriver();
+          await loadDriverTrip();
         } catch (error) {
           toast(error.message, "error");
           driverAction.disabled = false;
@@ -1907,84 +2130,197 @@
         return;
       }
 
-      const routeBtn = event.target.closest("[data-driver-route]");
-      if (routeBtn) {
-        const shipment = (state.driver?.shipments || []).find(
-          (s) => s.id === routeBtn.dataset.driverRoute
-        );
+      const aiAssignButton = event.target.closest("[data-ai-assign]");
+      if (aiAssignButton) {
+        await openAiAssignmentModal(aiAssignButton.dataset.aiAssign);
+        return;
+      }
 
-        if (shipment) await analyzeRoute(shipment, false);
+      const confirmAiButton = event.target.closest("[data-confirm-ai]");
+      if (confirmAiButton) {
+        const shipmentId = confirmAiButton.dataset.confirmAi;
+
+        confirmAiButton.disabled = true;
+
+        try {
+          await api(`/ai/assign-shipment/${shipmentId}`, {
+            method: "POST"
+          });
+
+          toast("AI assignment completed", "success");
+          closeModal();
+
+          await loadManager();
+        } catch (error) {
+          toast(error.message, "error");
+          confirmAiButton.disabled = false;
+        }
+
+        return;
+      }
+
+      if (event.target.id === "refreshManagerBtn") {
+        await loadManager();
+        return;
+      }
+
+      if (event.target.id === "refreshDriverBtn") {
+        await loadDriver();
+        await loadDriverTrip();
+        return;
+      }
+
+      if (event.target.id === "updateGpsBtn") {
+        updateGps();
+        return;
+      }
+
+      if (event.target.id === "refreshTripBtn") {
+        await loadDriverTrip();
+        return;
+      }
+
+      if (event.target.id === "analyzeAlternateRouteBtn") {
+        await analyzeAlternateRoute();
+        return;
+      }
+
+      if (event.target.id === "refreshMonitorBtn") {
+        await loadDriverMonitor();
+        return;
+      }
+
+      if (event.target.id === "createSnapshotBtn") {
+        try {
+          await api("/manager/snapshot", {
+            method: "POST"
+          });
+
+          toast("Hourly snapshot captured", "success");
+          await loadDriverMonitor();
+        } catch (error) {
+          toast(error.message, "error");
+        }
+
+        return;
+      }
+
+      if (event.target.id === "prevDriverBtn") {
+        if (!state.monitorData.length) return;
+
+        state.monitorIndex =
+          (state.monitorIndex - 1 + state.monitorData.length) %
+          state.monitorData.length;
+
+        renderDriverMonitor();
+
+        return;
+      }
+
+      if (event.target.id === "nextDriverBtn") {
+        if (!state.monitorData.length) return;
+
+        state.monitorIndex =
+          (state.monitorIndex + 1) % state.monitorData.length;
+
+        renderDriverMonitor();
+
+        return;
+      }
+
+      if (event.target.id === "copyManagerPhone") {
+        try {
+          const manager = state.driver?.managerContact || state.managerContact;
+          await navigator.clipboard.writeText(manager?.phone || "");
+          toast("Manager number copied", "success");
+        } catch {
+          toast("Copy failed", "error");
+        }
       }
     }
 
     async function handleGlobalChanges(event) {
       const vehicleStatusEl = event.target.closest("[data-vehicle-status]");
+
       if (vehicleStatusEl) {
         try {
           await api(`/vehicles/${vehicleStatusEl.dataset.vehicleStatus}`, {
             method: "PATCH",
             body: { status: vehicleStatusEl.value }
           });
+
           toast("Vehicle status updated", "success");
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
         }
+
         return;
       }
 
       const vehicleDriverEl = event.target.closest("[data-vehicle-driver]");
+
       if (vehicleDriverEl) {
         try {
           await api(`/vehicles/${vehicleDriverEl.dataset.vehicleDriver}`, {
             method: "PATCH",
             body: { driverId: vehicleDriverEl.value || null }
           });
+
           toast("Driver assignment updated", "success");
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
         }
+
         return;
       }
 
       const shipmentVehicleEl = event.target.closest("[data-shipment-vehicle]");
+
       if (shipmentVehicleEl) {
         try {
           await api(`/shipments/${shipmentVehicleEl.dataset.shipmentVehicle}`, {
             method: "PATCH",
             body: { vehicleId: shipmentVehicleEl.value || null }
           });
+
           toast("Shipment vehicle updated", "success");
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
         }
+
         return;
       }
 
       const shipmentStatusEl = event.target.closest("[data-shipment-status]");
+
       if (shipmentStatusEl) {
         try {
           await api(`/shipments/${shipmentStatusEl.dataset.shipmentStatus}`, {
             method: "PATCH",
             body: { status: shipmentStatusEl.value }
           });
+
           toast("Shipment status updated", "success");
           await loadManager();
         } catch (error) {
           toast(error.message, "error");
         }
+
+        return;
+      }
+
+      if (event.target.id === "monitorDriverSelect") {
+        state.monitorIndex = event.target.selectedIndex;
+        renderDriverMonitor();
       }
     }
 
     function init() {
       $("#loginForm").addEventListener("submit", onLogin);
       $("#logoutBtn").addEventListener("click", logout);
-      $("#refreshManagerBtn").addEventListener("click", loadManager);
-      $("#refreshDriverBtn").addEventListener("click", loadDriver);
-      $("#updateGpsBtn").addEventListener("click", updateGps);
-      $("#analyzeRouteBtn").addEventListener("click", () => analyzeRouteForActive(false));
 
       $$(".demo-fill").forEach((btn) => {
         btn.addEventListener("click", () => {
