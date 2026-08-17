@@ -111,6 +111,7 @@ async function seedDb() {
         plate: "MH-12-AV-3456",
         type: "truck",
         capacityKg: 8000,
+        fuelConsumptionLPer100Km: 18,
         status: "loaded",
         driverId: "u-driver-1",
         location: { lat: 19.076, lng: 72.8777 },
@@ -122,6 +123,7 @@ async function seedDb() {
         plate: "DL-01-BC-9876",
         type: "truck",
         capacityKg: 6000,
+        fuelConsumptionLPer100Km: 17,
         status: "ready_to_load",
         driverId: "u-driver-2",
         location: { lat: 18.5204, lng: 73.8567 },
@@ -133,6 +135,7 @@ async function seedDb() {
         plate: "KA-05-MN-2211",
         type: "van",
         capacityKg: 2500,
+        fuelConsumptionLPer100Km: 12,
         status: "delayed",
         driverId: "u-driver-3",
         location: { lat: 12.9716, lng: 77.5946 },
@@ -144,6 +147,7 @@ async function seedDb() {
         plate: "TS-09-PQ-7788",
         type: "pickup",
         capacityKg: 1500,
+        fuelConsumptionLPer100Km: 10,
         status: "empty",
         driverId: "u-driver-4",
         location: { lat: 17.385, lng: 78.4867 },
@@ -155,6 +159,7 @@ async function seedDb() {
         plate: "TN-10-XZ-4455",
         type: "truck",
         capacityKg: 10000,
+        fuelConsumptionLPer100Km: 20,
         status: "maintenance",
         driverId: null,
         location: { lat: 13.0827, lng: 80.2707 },
@@ -168,6 +173,9 @@ async function seedDb() {
         code: "SHP-1001",
         origin: { label: "Mumbai Warehouse", lat: 19.076, lng: 72.8777 },
         destination: { label: "Pune Distribution Center", lat: 18.5204, lng: 73.8567 },
+        intermediateStops: [{ label: "Lonavala Checkpoint", lat: 18.75, lng: 73.4 }],
+        goodsDescription: "Industrial components",
+        priority: "urgent",
         weightKg: 5400,
         status: "in_transit",
         vehicleId: "v-1001",
@@ -182,6 +190,9 @@ async function seedDb() {
         code: "SHP-1002",
         origin: { label: "Chennai Port", lat: 13.0827, lng: 80.2707 },
         destination: { label: "Bengaluru Tech Park", lat: 12.9716, lng: 77.5946 },
+        intermediateStops: [],
+        goodsDescription: "Retail parcels",
+        priority: "regular",
         weightKg: 900,
         status: "pending",
         vehicleId: null,
@@ -196,6 +207,9 @@ async function seedDb() {
         code: "SHP-1003",
         origin: { label: "Hyderabad Hub", lat: 17.385, lng: 78.4867 },
         destination: { label: "Chennai Retail Center", lat: 13.0827, lng: 80.2707 },
+        intermediateStops: [{ label: "Tirupati Rest Stop", lat: 13.65, lng: 79.35 }],
+        goodsDescription: "FMCG goods",
+        priority: "delayed",
         weightKg: 1400,
         status: "delayed",
         vehicleId: "v-1003",
@@ -210,6 +224,9 @@ async function seedDb() {
         code: "SHP-1004",
         origin: { label: "Mumbai Warehouse", lat: 19.076, lng: 72.8777 },
         destination: { label: "Nashik Depot", lat: 19.9975, lng: 73.7898 },
+        intermediateStops: [],
+        goodsDescription: "General cargo",
+        priority: "regular",
         weightKg: 1200,
         status: "delivered",
         vehicleId: "v-1004",
@@ -220,20 +237,49 @@ async function seedDb() {
         history: [{ at: minutesAgo(2000), event: "created" }]
       }
     ],
-    audit: []
+    audit: [],
+    snapshots: []
   };
 
   await fs.writeFile(DB_PATH, JSON.stringify(db, null, 2), "utf8");
 }
 
+function migrateDb(db) {
+  if (!Array.isArray(db.snapshots)) db.snapshots = [];
+
+  db.vehicles = (db.vehicles || []).map((vehicle) => {
+    const v = { ...vehicle };
+
+    if (v.fuelConsumptionLPer100Km === undefined) {
+      if (v.type === "van") v.fuelConsumptionLPer100Km = 12;
+      else if (v.type === "pickup") v.fuelConsumptionLPer100Km = 10;
+      else v.fuelConsumptionLPer100Km = 18;
+    }
+
+    return v;
+  });
+
+  db.shipments = (db.shipments || []).map((shipment) => {
+    const s = { ...shipment };
+
+    if (!s.goodsDescription) s.goodsDescription = "General cargo";
+    if (!s.priority) s.priority = s.status === "delayed" ? "delayed" : "regular";
+    if (!Array.isArray(s.intermediateStops)) s.intermediateStops = [];
+
+    return s;
+  });
+
+  return db;
+}
+
 async function readDb() {
   try {
     const raw = await fs.readFile(DB_PATH, "utf8");
-    return JSON.parse(raw);
+    return migrateDb(JSON.parse(raw));
   } catch {
     await seedDb();
     const raw = await fs.readFile(DB_PATH, "utf8");
-    return JSON.parse(raw);
+    return migrateDb(JSON.parse(raw));
   }
 }
 
@@ -244,7 +290,8 @@ async function writeDb(db) {
 function haversineKm(a, b) {
   const toRad = (x) => (x * Math.PI) / 180;
   const earthRadiusKm = 6371;
-  const dLat = toRad((b.lng === undefined ? 0 : b.lat || 0) - (a.lat || 0));
+
+  const dLat = toRad((b.lat || 0) - (a.lat || 0));
   const dLng = toRad((b.lng || 0) - (a.lng || 0));
   const lat1 = toRad(a.lat || 0);
   const lat2 = toRad(b.lat || 0);
@@ -271,6 +318,7 @@ function setVehicleStatus(db, vehicleId, status) {
 
 function validateCapacity(db, weightKg, vehicleId) {
   if (!vehicleId) return { ok: true };
+
   const vehicle = db.vehicles.find((v) => v.id === vehicleId);
   if (!vehicle) return { ok: true };
 
@@ -337,6 +385,416 @@ function estimateMinutes(vehicle, shipment) {
   return Math.max(20, Math.round((distanceKm / 55) * 60) + 10);
 }
 
+function priorityRank(priority = "regular") {
+  if (priority === "delayed") return 3;
+  if (priority === "urgent") return 2;
+  return 1;
+}
+
+function driverHasActiveShipment(db, driverId) {
+  const vehicle = db.vehicles.find((v) => v.driverId === driverId);
+  if (!vehicle) return false;
+
+  return db.shipments.some(
+    (s) => s.vehicleId === vehicle.id && isShipmentActive(s)
+  );
+}
+
+function availableDrivers(db) {
+  return db.users.filter(
+    (u) => u.role === "driver" && !driverHasActiveShipment(db, u.id)
+  );
+}
+
+function routeDistanceKm(points = []) {
+  let total = 0;
+
+  for (let i = 0; i < points.length - 1; i += 1) {
+    total += haversineKm(points[i], points[i + 1]);
+  }
+
+  return total * 1.25;
+}
+
+function buildRoutePath(origin, destination, offset = 0) {
+  const steps = 24;
+  const points = [];
+
+  if (origin.lat === destination.lat && origin.lng === destination.lng) {
+    return [origin, destination];
+  }
+
+  const midLat = (origin.lat + destination.lat) / 2;
+  const midLng = (origin.lng + destination.lng) / 2;
+  const dx = destination.lat - origin.lat;
+  const dy = destination.lng - origin.lng;
+  const norm = Math.sqrt(dx * dx + dy * dy) || 1;
+
+  const controlLat = midLat + (-dy / norm) * offset;
+  const controlLng = midLng + (dx / norm) * offset;
+
+  for (let i = 0; i <= steps; i += 1) {
+    const t = i / steps;
+
+    const lat =
+      (1 - t) * (1 - t) * origin.lat +
+      2 * (1 - t) * t * controlLat +
+      t * t * destination.lat;
+
+    const lng =
+      (1 - t) * (1 - t) * origin.lng +
+      2 * (1 - t) * t * controlLng +
+      t * t * destination.lng;
+
+    points.push({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) });
+  }
+
+  return points;
+}
+
+function buildMultiRoutePath(points = []) {
+  if (points.length < 2) return points;
+
+  let path = [];
+
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const segment = buildRoutePath(points[i], points[i + 1], 0);
+
+    if (i > 0) {
+      segment.shift();
+    }
+
+    path.push(...segment);
+  }
+
+  return path;
+}
+
+function trafficStatusForTrip({ shipment, distanceKm }) {
+  const hour = new Date().getHours();
+  const peak = (hour >= 8 && hour <= 11) || (hour >= 17 && hour <= 20);
+
+  let status = "moderate";
+  let delayRisk = 30;
+
+  if (shipment?.delayed || shipment?.status === "delayed" || shipment?.priority === "delayed") {
+    status = "heavy";
+    delayRisk = 72;
+  } else if (peak) {
+    status = "moderate";
+    delayRisk = 38;
+  } else {
+    status = "light";
+    delayRisk = 16;
+  }
+
+  if (distanceKm > 500) delayRisk += 10;
+  if (shipment?.priority === "urgent") delayRisk += 6;
+
+  delayRisk = Math.min(100, delayRisk);
+
+  return {
+    status,
+    delayRisk,
+    note:
+      status === "heavy"
+        ? "Heavy traffic or delay condition detected"
+        : status === "moderate"
+          ? "Moderate traffic expected"
+          : "Light traffic expected"
+  };
+}
+
+function estimateFuelForTrip(distanceKm, vehicle) {
+  const rate = Number(vehicle?.fuelConsumptionLPer100Km || 14);
+
+  return {
+    rateLPer100Km: rate,
+    estimatedLiters: round1((distanceKm * rate) / 100 + 2)
+  };
+}
+
+function estimateEtaForTraffic(distanceKm, trafficStatus) {
+  const speed =
+    trafficStatus === "heavy" ? 38 : trafficStatus === "moderate" ? 52 : 62;
+
+  return Math.max(5, Math.round((distanceKm / speed) * 60));
+}
+
+function computeAiAssignment(db, shipment) {
+  const candidates = [];
+  const freeDrivers = availableDrivers(db);
+
+  for (const vehicle of db.vehicles) {
+    if (!["ready_to_load", "empty"].includes(vehicle.status)) {
+      continue;
+    }
+
+    const capacityOk =
+      Number(vehicle.capacityKg || 0) <= 0 ||
+      Number(shipment.weightKg || 0) <= Number(vehicle.capacityKg || 0);
+
+    if (!capacityOk) continue;
+
+    let assignedDriver = null;
+
+    if (vehicle.driverId) {
+      if (driverHasActiveShipment(db, vehicle.driverId)) continue;
+      assignedDriver = db.users.find((u) => u.id === vehicle.driverId) || null;
+    } else if (freeDrivers.length) {
+      assignedDriver = freeDrivers[0];
+    } else {
+      continue;
+    }
+
+    const distance = haversineKm(vehicle.location || shipment.origin, shipment.origin);
+
+    let score = distance * 1.6;
+
+    if (vehicle.status === "ready_to_load") score -= 14;
+    if (vehicle.status === "empty") score -= 8;
+    if (assignedDriver) score -= 12;
+
+    const utilization =
+      Number(vehicle.capacityKg) > 0
+        ? Number(shipment.weightKg) / Number(vehicle.capacityKg)
+        : 0.5;
+
+    if (utilization > 0.9) score += 18;
+    else if (utilization < 0.25) score += 6;
+
+    if (shipment.priority === "urgent") score += distance * 0.25;
+    if (shipment.priority === "delayed") score += distance * 0.35;
+
+    candidates.push({
+      vehicle,
+      driver: assignedDriver,
+      distanceKm: round1(distance),
+      score: round1(score),
+      utilizationPercent: round1(utilization * 100),
+      reason: `${vehicle.plate} is ${vehicle.status.replaceAll("_", " ")}, ${round1(distance)} km from origin, ${
+        assignedDriver ? `driver ${assignedDriver.name} is available` : "an available driver can be assigned"
+      }, and capacity utilization is ${round1(utilization * 100)}%.`
+    });
+  }
+
+  candidates.sort((a, b) => a.score - b.score);
+  return candidates[0] || null;
+}
+
+function buildDriverTrip(db, vehicle) {
+  const activeShipments = db.shipments
+    .filter((s) => s.vehicleId === vehicle.id && isShipmentActive(s))
+    .map((s) => shipmentView(db, s));
+
+  if (!activeShipments.length) {
+    return { hasTrip: false };
+  }
+
+  const primary = [...activeShipments].sort((a, b) => {
+    const aDelay = a.delayed || a.status === "delayed" ? 1 : 0;
+    const bDelay = b.delayed || b.status === "delayed" ? 1 : 0;
+
+    if (bDelay !== aDelay) return bDelay - aDelay;
+    if (priorityRank(b.priority) !== priorityRank(a.priority)) {
+      return priorityRank(b.priority) - priorityRank(a.priority);
+    }
+
+    return new Date(a.eta || 0) - new Date(b.eta || 0);
+  })[0];
+
+  const points = [
+    primary.origin,
+    ...(primary.intermediateStops || []),
+    primary.destination
+  ].filter((p) => p && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)));
+
+  const distanceKm = routeDistanceKm(points);
+  const traffic = trafficStatusForTrip({ shipment: primary, distanceKm });
+  const etaMinutes = estimateEtaForTraffic(distanceKm, traffic.status);
+  const fuel = estimateFuelForTrip(distanceKm, vehicle);
+
+  const totalWeightKg = round1(
+    activeShipments.reduce((sum, s) => sum + Number(s.weightKg || 0), 0)
+  );
+
+  const goodsDescription = activeShipments
+    .map((s) => s.goodsDescription || "General cargo")
+    .join("; ");
+
+  const tripPriority = activeShipments.some(
+    (s) => s.delayed || s.status === "delayed" || s.priority === "delayed"
+  )
+    ? "delayed"
+    : activeShipments.some((s) => s.priority === "urgent")
+      ? "urgent"
+      : "regular";
+
+  return {
+    hasTrip: true,
+    primaryShipment: primary,
+    activeShipments,
+    trip: {
+      currentLocation: vehicle.location || null,
+      startingPoint: primary.origin,
+      intermediateStops: primary.intermediateStops || [],
+      endingPoint: primary.destination,
+      path: buildMultiRoutePath(points),
+      distanceKm: round1(distanceKm),
+      etaMinutes,
+      expectedArrival: addMinutesISO(etaMinutes),
+      fuel,
+      traffic,
+      totalWeightKg,
+      goodsDescription,
+      priority: tripPriority
+    }
+  };
+}
+
+async function getWeather(coords) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current_weather=true`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function describeWeatherCode(code) {
+  const map = {
+    0: "Clear sky",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Depositing rime fog",
+    51: "Light drizzle",
+    53: "Moderate drizzle",
+    55: "Dense drizzle",
+    56: "Light freezing drizzle",
+    57: "Dense freezing drizzle",
+    61: "Slight rain",
+    63: "Moderate rain",
+    65: "Heavy rain",
+    66: "Light freezing rain",
+    67: "Heavy freezing rain",
+    71: "Slight snowfall",
+    73: "Moderate snowfall",
+    75: "Heavy snowfall",
+    77: "Snow grains",
+    80: "Slight rain showers",
+    81: "Moderate rain showers",
+    82: "Violent rain showers",
+    85: "Slight snow showers",
+    86: "Heavy snow showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with slight hail",
+    99: "Thunderstorm with heavy hail"
+  };
+
+  return map[code] || "Mixed weather conditions";
+}
+
+function assessWeather(currentWeather) {
+  if (!currentWeather) {
+    return {
+      level: "unknown",
+      risk: 25,
+      summary: "Weather data unavailable; using conservative safety margin",
+      temperature: null,
+      windSpeed: null
+    };
+  }
+
+  const code = Number(currentWeather.weathercode ?? 0);
+  const wind = Number(currentWeather.windspeed ?? 0);
+  const temperature = Number(currentWeather.temperature ?? 0);
+
+  let risk = 12;
+  let level = "good";
+
+  const severeCodes = [45, 48, 56, 57, 65, 66, 67, 75, 77, 82, 85, 86, 95, 96, 99];
+  const moderateCodes = [51, 53, 61, 63, 71, 80, 81];
+
+  if (severeCodes.includes(code) || wind > 45) {
+    risk = 82;
+    level = "severe";
+  } else if (moderateCodes.includes(code) || wind > 28) {
+    risk = 48;
+    level = "caution";
+  }
+
+  if (temperature <= 0) risk += 8;
+  if (temperature >= 43) risk += 6;
+
+  risk = Math.min(100, risk);
+
+  if (risk >= 65) level = "severe";
+  else if (risk >= 35) level = "caution";
+  else level = "good";
+
+  return {
+    level,
+    risk,
+    summary: describeWeatherCode(code),
+    temperature,
+    windSpeed: wind
+  };
+}
+
+async function getGoogleRoute(origin, destination) {
+  const key = process.env.GOOGLE_MAPS_API_KEY;
+  if (!key) return null;
+
+  try {
+    const params = new URLSearchParams({
+      origins: `${origin.lat},${origin.lng}`,
+      destinations: `${destination.lat},${destination.lng}`,
+      key,
+      mode: "driving",
+      departure_time: "now",
+      traffic_model: "best_guess"
+    });
+
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?${params.toString()}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    const data = await response.json();
+    if (data.status !== "OK") return null;
+
+    const element = data.rows?.[0]?.elements?.[0];
+    if (element?.status !== "OK") return null;
+
+    return {
+      distanceKm: element.distance.value / 1000,
+      durationMin: Math.round(
+        (element.duration_in_traffic?.value || element.duration.value) / 60
+      ),
+      source: "google_distance_matrix"
+    };
+  } catch {
+    return null;
+  }
+}
+
+function riskLevel(score) {
+  if (score >= 65) return "severe";
+  if (score >= 35) return "caution";
+  return "good";
+}
+
 function authenticate(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith("Bearer ")) {
@@ -365,6 +823,7 @@ const authorize = (roles) => (req, res, next) => {
 app.get("/api/config", (req, res) => {
   const googleMapsJsKey =
     process.env.GOOGLE_MAPS_JS_API_KEY || process.env.GOOGLE_MAPS_API_KEY || "";
+
   const enableGoogle =
     String(process.env.FORCE_GOOGLE_MAPS || "").toLowerCase() === "true" &&
     Boolean(googleMapsJsKey);
@@ -379,6 +838,7 @@ app.post(
   "/api/auth/login",
   asyncHandler(async (req, res) => {
     const { username, password } = req.body || {};
+
     if (!username || !password) {
       return res.status(400).json({ error: "Username and password are required" });
     }
@@ -547,6 +1007,7 @@ app.post(
       plate: String(plate).trim(),
       type: String(type || "truck").trim(),
       capacityKg: toNumber(capacityKg, 0),
+      fuelConsumptionLPer100Km: toNumber(req.body?.fuelConsumptionLPer100Km, 16),
       status: vehicleStatus,
       driverId: driverId || null,
       location:
@@ -559,6 +1020,7 @@ app.post(
 
     db.vehicles.push(vehicle);
     await writeDb(db);
+
     return res.status(201).json({ vehicle: vehicleView(db, vehicle) });
   })
 );
@@ -572,11 +1034,14 @@ app.patch(
     const vehicle = db.vehicles.find((v) => v.id === req.params.id);
     if (!vehicle) return res.status(404).json({ error: "Vehicle not found" });
 
-    const { plate, type, capacityKg, status, driverId, location } = req.body || {};
+    const { plate, type, capacityKg, status, driverId, location, fuelConsumptionLPer100Km } = req.body || {};
 
     if (plate !== undefined) vehicle.plate = String(plate).trim();
     if (type !== undefined) vehicle.type = String(type).trim();
     if (capacityKg !== undefined) vehicle.capacityKg = toNumber(capacityKg, vehicle.capacityKg);
+    if (fuelConsumptionLPer100Km !== undefined) {
+      vehicle.fuelConsumptionLPer100Km = toNumber(fuelConsumptionLPer100Km, vehicle.fuelConsumptionLPer100Km);
+    }
 
     if (status !== undefined) {
       if (!VEHICLE_STATUSES.includes(status)) {
@@ -598,6 +1063,7 @@ app.patch(
     if (location !== undefined) {
       const lat = Number(location?.lat);
       const lng = Number(location?.lng);
+
       if (Number.isFinite(lat) && Number.isFinite(lng)) {
         vehicle.location = { lat, lng };
       }
@@ -605,6 +1071,7 @@ app.patch(
 
     vehicle.updatedAt = nowISO();
     await writeDb(db);
+
     return res.json({ vehicle: vehicleView(db, vehicle) });
   })
 );
@@ -615,10 +1082,12 @@ app.get(
   authorize(["manager"]),
   asyncHandler(async (req, res) => {
     const db = await readDb();
+
     const drivers = db.users
       .filter((u) => u.role === "driver")
       .map((d) => {
         const vehicle = db.vehicles.find((v) => v.driverId === d.id);
+
         return {
           ...safeUser(d),
           assignedVehicle: vehicle?.plate || null,
@@ -662,6 +1131,7 @@ app.post(
 
     db.users.push(user);
     await writeDb(db);
+
     return res.status(201).json({ driver: safeUser(user) });
   })
 );
@@ -691,15 +1161,20 @@ app.post(
       destinationLng = 72.8777,
       weightKg = 500,
       vehicleId = null,
-      etaMinutes = 60
+      etaMinutes = 60,
+      goodsDescription = "General cargo",
+      priority = "regular",
+      intermediateStops = []
     } = req.body || {};
 
     const db = await readDb();
 
     let status = "pending";
+
     if (vehicleId) {
       const vehicle = db.vehicles.find((v) => v.id === vehicleId);
       if (!vehicle) return res.status(400).json({ error: "Assigned vehicle not found" });
+
       if (vehicle.status === "maintenance") {
         return res.status(400).json({ error: "Cannot assign shipment to a maintenance vehicle" });
       }
@@ -725,6 +1200,17 @@ app.post(
         lat: toNumber(destinationLat, 19.076),
         lng: toNumber(destinationLng, 72.8777)
       },
+      intermediateStops: Array.isArray(intermediateStops)
+        ? intermediateStops
+            .filter((stop) => stop && Number.isFinite(Number(stop.lat)) && Number.isFinite(Number(stop.lng)))
+            .map((stop) => ({
+              label: String(stop.label || "Intermediate stop"),
+              lat: Number(stop.lat),
+              lng: Number(stop.lng)
+            }))
+        : [],
+      goodsDescription: String(goodsDescription || "General cargo").trim(),
+      priority: ["regular", "urgent", "delayed"].includes(priority) ? priority : "regular",
       weightKg: toNumber(weightKg, 0),
       status,
       vehicleId: vehicleId || null,
@@ -742,6 +1228,7 @@ app.post(
     }
 
     await writeDb(db);
+
     return res.status(201).json({ shipment: shipmentView(db, shipment) });
   })
 );
@@ -755,7 +1242,15 @@ app.patch(
     const shipment = db.shipments.find((s) => s.id === req.params.id);
     if (!shipment) return res.status(404).json({ error: "Shipment not found" });
 
-    const { status, vehicleId, etaMinutes, delayReason } = req.body || {};
+    const {
+      status,
+      vehicleId,
+      etaMinutes,
+      delayReason,
+      goodsDescription,
+      priority,
+      intermediateStops
+    } = req.body || {};
 
     if (status !== undefined) {
       if (!SHIPMENT_STATUSES.includes(status)) {
@@ -767,6 +1262,7 @@ app.patch(
 
       if (status === "delivered") {
         shipment.deliveredAt = nowISO();
+
         if (shipment.vehicleId && !vehicleHasOtherActive(db, shipment.vehicleId, shipment.id)) {
           setVehicleStatus(db, shipment.vehicleId, "empty");
         }
@@ -776,12 +1272,14 @@ app.patch(
         }
       } else if (status === "delayed") {
         shipment.delayReason = delayReason || shipment.delayReason || "Manager reported delay";
+
         if (shipment.vehicleId) {
           setVehicleStatus(db, shipment.vehicleId, "delayed");
         }
       } else if (["in_transit", "arrived"].includes(status)) {
         shipment.deliveredAt = null;
         shipment.delayReason = "";
+
         if (shipment.vehicleId) {
           setVehicleStatus(db, shipment.vehicleId, "loaded");
         }
@@ -823,8 +1321,31 @@ app.patch(
       shipment.delayReason = delayReason;
     }
 
+    if (goodsDescription !== undefined) {
+      shipment.goodsDescription = String(goodsDescription).trim();
+    }
+
+    if (priority !== undefined) {
+      shipment.priority = ["regular", "urgent", "delayed"].includes(priority)
+        ? priority
+        : shipment.priority;
+    }
+
+    if (intermediateStops !== undefined) {
+      shipment.intermediateStops = Array.isArray(intermediateStops)
+        ? intermediateStops
+            .filter((stop) => stop && Number.isFinite(Number(stop.lat)) && Number.isFinite(Number(stop.lng)))
+            .map((stop) => ({
+              label: String(stop.label || "Intermediate stop"),
+              lat: Number(stop.lat),
+              lng: Number(stop.lng)
+            }))
+        : shipment.intermediateStops;
+    }
+
     shipment.updatedAt = nowISO();
     await writeDb(db);
+
     return res.json({ shipment: shipmentView(db, shipment) });
   })
 );
@@ -835,6 +1356,7 @@ app.post(
   authorize(["manager"]),
   asyncHandler(async (req, res) => {
     const { newVehicleId, reason = "Manager reassignment" } = req.body || {};
+
     if (!newVehicleId) {
       return res.status(400).json({ error: "newVehicleId is required" });
     }
@@ -859,6 +1381,7 @@ app.post(
 
     if (oldVehicleId) {
       const oldVehicle = db.vehicles.find((v) => v.id === oldVehicleId);
+
       if (oldVehicle && !vehicleHasOtherActive(db, oldVehicleId, shipment.id)) {
         oldVehicle.status = "ready_to_load";
         oldVehicle.updatedAt = nowISO();
@@ -869,6 +1392,7 @@ app.post(
     shipment.status = "in_transit";
     shipment.delayReason = "";
     shipment.eta = addMinutesISO(estimateMinutes(newVehicle, shipment));
+
     shipment.history.push({
       at: nowISO(),
       event: "reassigned",
@@ -889,6 +1413,7 @@ app.post(
     });
 
     await writeDb(db);
+
     return res.json({ shipment: shipmentView(db, shipment) });
   })
 );
@@ -948,12 +1473,16 @@ app.post(
 
     const db = await readDb();
     const vehicle = db.vehicles.find((v) => v.driverId === req.user.id);
-    if (!vehicle) return res.status(404).json({ error: "No vehicle assigned to this driver" });
+
+    if (!vehicle) {
+      return res.status(404).json({ error: "No vehicle assigned to this driver" });
+    }
 
     vehicle.location = { lat, lng };
     vehicle.updatedAt = nowISO();
 
     await writeDb(db);
+
     return res.json({ ok: true, location: vehicle.location });
   })
 );
@@ -987,6 +1516,7 @@ app.post(
 
     if (status === "delivered") {
       shipment.deliveredAt = nowISO();
+
       if (!vehicleHasOtherActive(db, vehicle.id, shipment.id)) {
         vehicle.status = "empty";
         vehicle.updatedAt = nowISO();
@@ -1006,186 +1536,10 @@ app.post(
 
     shipment.updatedAt = nowISO();
     await writeDb(db);
+
     return res.json({ shipment: shipmentView(db, shipment) });
   })
 );
-
-async function getWeather(coords) {
-  try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current_weather=true`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
-
-    if (!response.ok) return null;
-    return await response.json();
-  } catch {
-    return null;
-  }
-}
-
-function describeWeatherCode(code) {
-  const map = {
-    0: "Clear sky",
-    1: "Mainly clear",
-    2: "Partly cloudy",
-    3: "Overcast",
-    45: "Fog",
-    48: "Depositing rime fog",
-    51: "Light drizzle",
-    53: "Moderate drizzle",
-    55: "Dense drizzle",
-    56: "Light freezing drizzle",
-    57: "Dense freezing drizzle",
-    61: "Slight rain",
-    63: "Moderate rain",
-    65: "Heavy rain",
-    66: "Light freezing rain",
-    67: "Heavy freezing rain",
-    71: "Slight snowfall",
-    73: "Moderate snowfall",
-    75: "Heavy snowfall",
-    77: "Snow grains",
-    80: "Slight rain showers",
-    81: "Moderate rain showers",
-    82: "Violent rain showers",
-    85: "Slight snow showers",
-    86: "Heavy snow showers",
-    95: "Thunderstorm",
-    96: "Thunderstorm with slight hail",
-    99: "Thunderstorm with heavy hail"
-  };
-
-  return map[code] || "Mixed weather conditions";
-}
-
-function assessWeather(currentWeather) {
-  if (!currentWeather) {
-    return {
-      level: "unknown",
-      risk: 25,
-      summary: "Weather data unavailable; using conservative safety margin",
-      temperature: null,
-      windSpeed: null
-    };
-  }
-
-  const code = Number(currentWeather.weathercode ?? 0);
-  const wind = Number(currentWeather.windspeed ?? 0);
-  const temperature = Number(currentWeather.temperature ?? 0);
-
-  let risk = 12;
-  let level = "good";
-
-  const severeCodes = [45, 48, 56, 57, 65, 66, 67, 75, 77, 82, 85, 86, 95, 96, 99];
-  const moderateCodes = [51, 53, 61, 63, 71, 80, 81];
-
-  if (severeCodes.includes(code) || wind > 45) {
-    risk = 82;
-    level = "severe";
-  } else if (moderateCodes.includes(code) || wind > 28) {
-    risk = 48;
-    level = "caution";
-  }
-
-  if (temperature <= 0) risk += 8;
-  if (temperature >= 43) risk += 6;
-
-  risk = Math.min(100, risk);
-
-  if (risk >= 65) level = "severe";
-  else if (risk >= 35) level = "caution";
-  else level = "good";
-
-  return {
-    level,
-    risk,
-    summary: describeWeatherCode(code),
-    temperature,
-    windSpeed: wind
-  };
-}
-
-async function getGoogleRoute(origin, destination) {
-  const key = process.env.GOOGLE_MAPS_API_KEY;
-  if (!key) return null;
-
-  try {
-    const params = new URLSearchParams({
-      origins: `${origin.lat},${origin.lng}`,
-      destinations: `${destination.lat},${destination.lng}`,
-      key,
-      mode: "driving",
-      departure_time: "now",
-      traffic_model: "best_guess"
-    });
-
-    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?${params.toString()}`;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
-
-    const data = await response.json();
-    if (data.status !== "OK") return null;
-
-    const element = data.rows?.[0]?.elements?.[0];
-    if (element?.status !== "OK") return null;
-
-    return {
-      distanceKm: element.distance.value / 1000,
-      durationMin: Math.round(
-        (element.duration_in_traffic?.value || element.duration.value) / 60
-      ),
-      source: "google_distance_matrix"
-    };
-  } catch {
-    return null;
-  }
-}
-
-function buildRoutePath(origin, destination, offset = 0) {
-  const steps = 24;
-  const points = [];
-
-  if (origin.lat === destination.lat && origin.lng === destination.lng) {
-    return [origin, destination];
-  }
-
-  const midLat = (origin.lat + destination.lat) / 2;
-  const midLng = (origin.lng + destination.lng) / 2;
-  const dx = destination.lat - origin.lat;
-  const dy = destination.lng - origin.lng;
-  const norm = Math.sqrt(dx * dx + dy * dy) || 1;
-
-  const controlLat = midLat + (-dy / norm) * offset;
-  const controlLng = midLng + (dx / norm) * offset;
-
-  for (let i = 0; i <= steps; i += 1) {
-    const t = i / steps;
-    const lat =
-      (1 - t) * (1 - t) * origin.lat +
-      2 * (1 - t) * t * controlLat +
-      t * t * destination.lat;
-    const lng =
-      (1 - t) * (1 - t) * origin.lng +
-      2 * (1 - t) * t * controlLng +
-      t * t * destination.lng;
-
-    points.push({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) });
-  }
-
-  return points;
-}
-
-function riskLevel(score) {
-  if (score >= 65) return "severe";
-  if (score >= 35) return "caution";
-  return "good";
-}
 
 app.get(
   "/api/route/recommend",
@@ -1228,10 +1582,7 @@ app.get(
         : Math.round(weatherPenalty * 0.75);
 
     const alternateEtaMinutes = Math.max(5, alternateBaseEta + alternateWeatherPenalty);
-    const alternateRisk = Math.max(
-      7,
-      Math.round(weatherAssessment.risk * 0.42 + 10)
-    );
+    const alternateRisk = Math.max(7, Math.round(weatherAssessment.risk * 0.42 + 10));
 
     const offset = Math.min(0.35, Math.max(0.025, primaryDistanceKm / 2800));
 
@@ -1275,8 +1626,7 @@ app.get(
       alternateEtaMinutes <= primaryEtaMinutes * 1.08
     ) {
       recommendedId = "alternate";
-      recommendationReason =
-        "Alternate route has similar ETA and lower operational risk.";
+      recommendationReason = "Alternate route has similar ETA and lower operational risk.";
     }
 
     return res.json({
@@ -1300,10 +1650,12 @@ app.get(
   asyncHandler(async (req, res) => {
     const db = await readDb();
     const vehicle = db.vehicles.find((v) => v.id === req.query.vehicleId);
+
     if (!vehicle) return res.status(404).json({ error: "Vehicle not found" });
 
     if (req.user.role !== "manager") {
       const driverVehicle = db.vehicles.find((v) => v.driverId === req.user.id);
+
       if (!driverVehicle || driverVehicle.id !== vehicle.id) {
         return res.status(403).json({ error: "Forbidden" });
       }
@@ -1333,6 +1685,7 @@ app.get(
 
       remaining.forEach((stop, index) => {
         const distance = haversineKm(current, stop);
+
         if (distance < bestDistance) {
           bestDistance = distance;
           bestIndex = index;
@@ -1340,6 +1693,7 @@ app.get(
       });
 
       const next = remaining.splice(bestIndex, 1)[0];
+
       orderedStops.push({
         ...next,
         distanceFromPrevKm: round1(bestDistance)
@@ -1356,6 +1710,267 @@ app.get(
     });
   })
 );
+
+app.get(
+  "/api/ai/recommend-vehicle/:shipmentId",
+  authenticate,
+  authorize(["manager"]),
+  asyncHandler(async (req, res) => {
+    const db = await readDb();
+    const shipment = db.shipments.find((s) => s.id === req.params.shipmentId);
+
+    if (!shipment) {
+      return res.status(404).json({ error: "Shipment not found" });
+    }
+
+    if (!isShipmentActive(shipment)) {
+      return res.status(400).json({ error: "Shipment is not active" });
+    }
+
+    const recommendation = computeAiAssignment(db, shipment);
+
+    if (!recommendation) {
+      return res.status(400).json({
+        error: "No available vehicle and driver with sufficient capacity found."
+      });
+    }
+
+    return res.json({
+      shipmentId: shipment.id,
+      recommendation
+    });
+  })
+);
+
+app.post(
+  "/api/ai/assign-shipment/:shipmentId",
+  authenticate,
+  authorize(["manager"]),
+  asyncHandler(async (req, res) => {
+    const db = await readDb();
+    const shipment = db.shipments.find((s) => s.id === req.params.shipmentId);
+
+    if (!shipment) {
+      return res.status(404).json({ error: "Shipment not found" });
+    }
+
+    if (!isShipmentActive(shipment)) {
+      return res.status(400).json({ error: "Shipment is not active" });
+    }
+
+    const recommendation = computeAiAssignment(db, shipment);
+
+    if (!recommendation) {
+      return res.status(400).json({
+        error: "No available vehicle and driver with sufficient capacity found."
+      });
+    }
+
+    const oldVehicleId = shipment.vehicleId;
+    const vehicle = recommendation.vehicle;
+    const driver = recommendation.driver;
+
+    shipment.vehicleId = vehicle.id;
+
+    if (shipment.status === "delayed") {
+      shipment.status = "in_transit";
+      shipment.delayReason = "";
+    } else if (shipment.status === "pending") {
+      shipment.status = "assigned";
+    }
+
+    if (driver) {
+      vehicle.driverId = driver.id;
+    }
+
+    vehicle.status = "loaded";
+    vehicle.updatedAt = nowISO();
+
+    if (oldVehicleId && oldVehicleId !== vehicle.id) {
+      if (!vehicleHasOtherActive(db, oldVehicleId, shipment.id)) {
+        setVehicleStatus(db, oldVehicleId, "ready_to_load");
+      }
+    }
+
+    shipment.history.push({
+      at: nowISO(),
+      event: "ai_assigned",
+      vehicle: vehicle.plate,
+      driver: driver?.name || null
+    });
+
+    shipment.updatedAt = nowISO();
+
+    db.audit.push({
+      at: nowISO(),
+      action: "ai_assign",
+      shipmentId: shipment.id,
+      vehicleId: vehicle.id,
+      driverId: driver?.id || null,
+      by: req.user.id
+    });
+
+    await writeDb(db);
+
+    return res.json({
+      shipment: shipmentView(db, shipment),
+      recommendation
+    });
+  })
+);
+
+app.get(
+  "/api/driver/trip-intelligence",
+  authenticate,
+  authorize(["driver"]),
+  asyncHandler(async (req, res) => {
+    const db = await readDb();
+    const vehicle = db.vehicles.find((v) => v.driverId === req.user.id);
+
+    if (!vehicle) {
+      return res.json({ hasTrip: false });
+    }
+
+    const tripData = buildDriverTrip(db, vehicle);
+
+    if (!tripData.hasTrip) {
+      return res.json({
+        hasTrip: false,
+        vehicle: vehicleView(db, vehicle)
+      });
+    }
+
+    let currentWeather = null;
+    let destinationWeather = null;
+
+    try {
+      if (tripData.trip.currentLocation) {
+        currentWeather = await getWeather(tripData.trip.currentLocation);
+      }
+
+      destinationWeather = await getWeather(tripData.trip.endingPoint);
+    } catch {
+      // Weather failures should not block trip intelligence.
+    }
+
+    tripData.trip.weather = {
+      current: assessWeather(currentWeather?.current_weather),
+      destination: assessWeather(destinationWeather?.current_weather)
+    };
+
+    tripData.vehicle = vehicleView(db, vehicle);
+
+    return res.json(tripData);
+  })
+);
+
+app.get(
+  "/api/manager/driver-monitor",
+  authenticate,
+  authorize(["manager"]),
+  asyncHandler(async (req, res) => {
+    const db = await readDb();
+
+    const drivers = db.users
+      .filter((u) => u.role === "driver")
+      .map((driver) => {
+        const vehicle = db.vehicles.find((v) => v.driverId === driver.id);
+
+        const base = {
+          driver: safeUser(driver),
+          vehicle: vehicle ? vehicleView(db, vehicle) : null,
+          lastUpdate: vehicle?.updatedAt || null,
+          hasTrip: false
+        };
+
+        if (!vehicle) return base;
+
+        const tripData = buildDriverTrip(db, vehicle);
+
+        if (!tripData.hasTrip) {
+          return {
+            ...base,
+            vehicle: vehicleView(db, vehicle)
+          };
+        }
+
+        return {
+          ...base,
+          hasTrip: true,
+          trip: tripData.trip,
+          primaryShipment: tripData.primaryShipment,
+          activeShipmentCount: tripData.activeShipments.length,
+          activeShipments: tripData.activeShipments.map((s) => ({
+            id: s.id,
+            code: s.code,
+            status: s.status,
+            priority: s.priority
+          }))
+        };
+      });
+
+    return res.json({
+      drivers,
+      generatedAt: nowISO()
+    });
+  })
+);
+
+async function createHourlySnapshots() {
+  const db = await readDb();
+  const at = nowISO();
+
+  if (!Array.isArray(db.snapshots)) {
+    db.snapshots = [];
+  }
+
+  db.users
+    .filter((u) => u.role === "driver")
+    .forEach((driver) => {
+      const vehicle = db.vehicles.find((v) => v.driverId === driver.id);
+      if (!vehicle) return;
+
+      const tripData = buildDriverTrip(db, vehicle);
+
+      db.snapshots.push({
+        id: randomUUID(),
+        at,
+        driverId: driver.id,
+        vehicleId: vehicle.id,
+        location: vehicle.location || null,
+        hasTrip: tripData.hasTrip,
+        etaMinutes: tripData.hasTrip ? tripData.trip.etaMinutes : null,
+        distanceKm: tripData.hasTrip ? tripData.trip.distanceKm : null,
+        fuelLiters: tripData.hasTrip ? tripData.trip.fuel.estimatedLiters : null,
+        priority: tripData.hasTrip ? tripData.trip.priority : null
+      });
+    });
+
+  db.snapshots = db.snapshots.slice(-800);
+  await writeDb(db);
+}
+
+app.post(
+  "/api/manager/snapshot",
+  authenticate,
+  authorize(["manager"]),
+  asyncHandler(async (req, res) => {
+    await createHourlySnapshots();
+    const db = await readDb();
+
+    return res.json({
+      ok: true,
+      snapshotCount: db.snapshots.length,
+      latest: db.snapshots.slice(-10).reverse()
+    });
+  })
+);
+
+createHourlySnapshots().catch(() => {});
+
+setInterval(() => {
+  createHourlySnapshots().catch(() => {});
+}, 60 * 60 * 1000);
 
 app.use((err, req, res, next) => {
   console.error(err);
